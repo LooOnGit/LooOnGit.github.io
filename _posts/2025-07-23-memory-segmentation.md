@@ -9,17 +9,6 @@ tags: [C]
 
 Tài liệu này cung cấp kiến thức cơ bản, ví dụ minh họa và giải thích rõ ràng về **phân vùng bộ nhớ (memory segmentation)** trong ngôn ngữ lập trình C.
 
----
-
-## 📚 Mục lục
-
-- [Tổng quan](#Tổng-quan)
-- [Các vùng bộ nhớ chính](#các-vùng-bộ-nhớ-chính)
-- [Chi tiết từng phân vùng](#chi-tiết-từng-phân-vùng)
-- [Ví dụ minh họa](#ví-dụ-minh-họa)
-
----
-
 ## 🧠 Tổng quan
 
 Khi một chương trình C được biên dịch và chạy, bộ nhớ được chia thành nhiều **vùng (segment)** khác nhau. Việc phân vùng bộ nhớ giúp hệ điều hành và chương trình quản lý tài nguyên hiệu quả hơn, đảm bảo an toàn và ổn định.
