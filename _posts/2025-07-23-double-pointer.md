@@ -1,3 +1,10 @@
+---
+title: "DOUBLE POINTER"
+date: 2025-07-23 09:17:00 +0800
+categories: [C]
+tags: [C]
+---
+
 # 💡 Hướng dẫn về Con trỏ cấp 2 trong C
 
 ví dụ thực tế và giải thích rõ ràng về **con trỏ cấp 2 (double pointer)** trong lập trình C.
