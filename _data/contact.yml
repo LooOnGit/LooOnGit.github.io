@@ -22,6 +22,11 @@
 - type: linkedin
   icon: 'fab fa-linkedin'   # icons powered by <https://fontawesome.com/>
   url:  'https://www.linkedin.com/in/tranconghoa-a00416256/'                  # Fill with your Linkedin homepage
+
+- type: facebook
+  icon: 'fab fa-facebook'   # icons powered by <https://fontawesome.com/>
+  url:  'https://www.facebook.com/ic.to.161/'
+
 #
 # - type: stack-overflow
 #   icon: 'fab fa-stack-overflow'
