@@ -1,6 +1,6 @@
 ---
 title: "Makefile"
-date: 2025-07-25 21:26:00 +0800
+date: 2025-07-26 21:26:00 +0800
 categories: [Makefile]
 tags: [Makefile]
 ---
