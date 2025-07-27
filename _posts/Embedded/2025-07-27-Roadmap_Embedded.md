@@ -7,6 +7,6 @@ tags: [Embedded]
 ![alt text](/assets/Embedded/roadmap/conform.png)
 
 ![alt text](/assets/Embedded/roadmap/roadmap1.jpg)
-<!-- 
-<iframe src="tài-liệu.pdf" width="100%" height="600px">
-</iframe> -->
+
+<iframe src="/assets/Embedded/roadmap/roadmap.pdf" width="100%" height="600px">
+</iframe>
