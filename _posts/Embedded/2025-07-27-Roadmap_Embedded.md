@@ -7,6 +7,3 @@ tags: [Embedded]
 ![alt text](/assets/Embedded/roadmap/conform.png)
 
 ![alt text](/assets/Embedded/roadmap/roadmap1.jpg)
-
-[📄 Xem PDF roadmap]( /assets/Embedded/roadmap/roadmap.pdf )
-
