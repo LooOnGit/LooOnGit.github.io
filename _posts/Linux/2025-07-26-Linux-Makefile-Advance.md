@@ -164,14 +164,4 @@ clean:
   - ❌ Phụ thuộc vào lib trong hệ thống
   - ❌ Có thể gặp vấn đề về version
 
-## 🛠 Công cụ cần chuẩn bị
-- GCC Compiler
-- Make utility
-- Text editor (VSCode, Vim, etc.)
-- Git
-
-## 📖 Tài liệu tham khảo
-- GNU Make Manual
-- GCC Documentation
-- Linux Programming Interface
 
