@@ -68,6 +68,9 @@ int *arr = (int *)malloc(10 * sizeof(int));
 - Tự động thu hồi sau khi thoát khỏi khối lệnh.
 - Vùng nhớ Stack sẽ cấp phát theo xu hướng giảm người là cấp phát từ địa chỉ cao đến thấp.
 
+Dac diem stack: tat ca du lieu duoc luu tru tren stack phai co kich thuoc co dinh va da biet truoc, tuc la tai thoi diem bien dich, chuong trinh phai biet chinh xac moi bien chiem bao nhieu byte trong bo nho.
+
+
 ## 🧪 Ví dụ minh họa
 
 ```c
