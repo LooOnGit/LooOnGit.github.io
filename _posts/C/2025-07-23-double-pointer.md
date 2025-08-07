@@ -1,6 +1,6 @@
 ---
 title: "DOUBLE POINTER"
-date: 2025-07-23 09:17:00 +0800
+date: 2025-07-23 09:55:00 +0800
 categories: [C]
 tags: [C]
 ---
