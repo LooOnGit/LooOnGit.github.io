@@ -15,6 +15,7 @@ tags: [C]
 - Chỉ thị tiền xử lý (#)
 - Nhận mã nguồn
 Sau khi được xử lý hết ở giai đoạn này sinh ra `file.i`
+
 **Ví dụ:** chỉ thị #include cho phép ghép thêm mã chương trình của một tệp tiêu để vào mã nguồn cần dịch thay toàn bộ nội dung của file được include. Các hằng số được định nghĩa bằng #define sẽ được thay thế bằng giá trị cụ thể tại mỗi nơi sử dụng trong chương trình.
 
 ### 2. Biên dịch (compilation)
