@@ -22,7 +22,7 @@ Dùng lệnh `ls /dev/` để xem các thiết bị đang connect
 
 ### Hiển thị thông tin về file
 Dùng lệnh `ls -l` tính theo byte
-![alt text](../../assets/Linux/file_system/ls_l.png)
+![alt text](/assets/Linux/file_system/ls_l.png)
 
 - Trường đầu tiên: loại file, quyền file.
 - Trường thứ 2: số  hardlink của file.
@@ -33,11 +33,11 @@ Dùng lệnh `ls -l` tính theo byte
 - Trường thứ 7: tên file.
 
 Dùng lệnh `ls -lh` tính theo kbyte.
-![alt text](/home/loo/Tech/Blog/LooOnGit.github.io/assets/Linux/file_system/ls_lh.png)
+![alt text](/assets/Linux/file_system/ls_lh.png)
 
 ### User
 user `root` là user có quyền cao nhết trong hệ thống.
-![alt text](/home/loo/Tech/Blog/LooOnGit.github.io/assets/Linux/file_system/user_root.png)
+![alt text](/assets/Linux/file_system/user_root.png)
 
 ở đây khi chạy `sudo su` thì nó chuyển về user root từ user loo
 
