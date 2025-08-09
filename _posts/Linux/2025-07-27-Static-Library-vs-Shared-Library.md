@@ -1,3 +1,10 @@
+---
+title: "Staticlib and sharelib"
+date: 2025-08-09 14:05:00 +0800
+categories: [Linux]
+tags: [Linux]
+---
+
 # 🐧 Linux Learning | Phát triển Linux nhúng
 
 ## 📚 Static Library vs Shared Library | So sánh thư viện tĩnh và động
