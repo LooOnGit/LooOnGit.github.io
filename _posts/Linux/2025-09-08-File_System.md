@@ -183,5 +183,97 @@ int main(void) {
 ```
 khi mà open thì chiều từ phải sang trái. Khi đọc và ghi thì ngược lại(file descriptor -> Open file table -> I-node table)
 
+# Quản lý file trong Kernel: File Descriptor Table, Open File Table và I-node Table
+
+## 1. Giới thiệu
+Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một file (`open()`), kernel cần biết:
+- Tiến trình nào đang mở file gì.
+- Trạng thái đọc/ghi đến đâu.
+- Quyền truy cập file.
+- Thông tin vật lý của file trên ổ đĩa.
+
+Để quản lý điều đó một cách hiệu quả, kernel sử dụng **ba bảng** liên kết với nhau:
+
+---
+
+## 2. Ba bảng quản lý file
+
+### 2.1. File Descriptor Table (per-process table)
+- **Mỗi tiến trình** có **một bảng riêng** lưu các **file descriptor** (FD).
+- Mỗi FD là một số nguyên (0, 1, 2, …) trỏ tới **một entry** trong **Open File Table**.
+- 3 FD mặc định khi tạo tiến trình:
+  - `0` → **stdin** (standard input)
+  - `1` → **stdout** (standard output)
+  - `2` → **stderr** (standard error)
+- Cho phép nhiều FD khác nhau trỏ cùng một entry (vd: khi dùng `dup()`).
+
+**Ví dụ:**
+| FD | trỏ tới entry trong Open File Table |
+|----|-------------------------------------|
+| 0  | 5                                   |
+| 1  | 6                                   |
+| 2  | 7                                   |
+| 3  | 8                                   |
+
+---
+
+### 2.2. Open File Table (system-wide, shared)
+- Lưu thông tin về **một lần mở file**.
+- Có thể được **chia sẻ giữa nhiều tiến trình** (vd: khi fork, hoặc khi dup FD).
+- Mỗi entry chứa:
+  - **File offset** (đang đọc/ghi tới đâu).
+  - **Cờ** (O_RDONLY, O_WRONLY, O_RDWR, O_APPEND...).
+  - **Pointer đến I-node Table** của file tương ứng.
+
+**Ví dụ:**
+| Offset | Mode     | trỏ tới I-node entry |
+|--------|----------|----------------------|
+| 1024   | O_RDWR   | 15                   |
+
+---
+
+### 2.3. I-node Table (system-wide, shared)
+- Lưu thông tin **về bản thân file** trên đĩa.
+- Thông tin gồm:
+  - Kích thước file.
+  - Quyền truy cập (read/write/execute).
+  - UID/GID.
+  - Thời gian tạo/sửa.
+  - Con trỏ đến các block dữ liệu trên đĩa.
+
+**Ví dụ:**
+| File size | Permissions | UID | Blocks ... |
+|-----------|-------------|-----|------------|
+| 4 KB      | rw-r--r--   | 1000| ...        |
+
+---
+
+## 3. Mối quan hệ giữa 3 bảng
+```
+[File Descriptor Table của tiến trình]
+         ↓
+[Open File Table (thông tin mở file)]
+         ↓
+[I-node Table (thông tin file trên đĩa)]
+```
+
+**Ví dụ minh họa:**
+1. Tiến trình **A** gọi `fd = open("test.txt", O_RDWR)`
+2. Kernel tạo:
+   - Một **entry** trong Open File Table (offset=0, mode=O_RDWR).
+   - Entry này trỏ tới I-node entry của "test.txt".
+   - Trong File Descriptor Table của tiến trình A, gán `fd=3` trỏ tới entry vừa tạo.
+3. Nếu A gọi `dup(3)` → FD mới (vd: 4) cũng trỏ **cùng entry** trong Open File Table → offset được chia sẻ.
+4. Nếu tiến trình **B** mở `"test.txt"` → kernel có thể tạo **entry Open File Table riêng** nhưng **cùng trỏ** tới I-node Table.
+
+---
+
+## 4. Tóm tắt
+| Bảng              | Phạm vi          | Chứa gì                              | Mục đích |
+|-------------------|-----------------|---------------------------------------|----------|
+| File Descriptor   | Mỗi tiến trình  | Map FD → Open File Table entry        | Liên kết FD của tiến trình với file |
+| Open File Table   | Toàn hệ thống   | Offset, mode, pointer tới I-node      | Quản lý trạng thái mở file |
+| I-node Table      | Toàn hệ thống   | Thông tin file vật lý trên đĩa        | Quản lý metadata của file |
+
 ## 4. 🔒 **File Locking**
 ## 5. ⚡ **Đọc ghi File bất đồng bộ**
