@@ -208,6 +208,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 - Cho phép nhiều FD khác nhau trỏ cùng một entry (vd: khi dùng `dup()`).
 
 **Ví dụ:**
+
 | FD | trỏ tới entry trong Open File Table |
 |----|-------------------------------------|
 | 0  | 5                                   |
@@ -226,6 +227,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
   - **Pointer đến I-node Table** của file tương ứng.
 
 **Ví dụ:**
+
 | Offset | Mode     | trỏ tới I-node entry |
 |--------|----------|----------------------|
 | 1024   | O_RDWR   | 15                   |
@@ -242,6 +244,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
   - Con trỏ đến các block dữ liệu trên đĩa.
 
 **Ví dụ:**
+
 | File size | Permissions | UID | Blocks ... |
 |-----------|-------------|-----|------------|
 | 4 KB      | rw-r--r--   | 1000| ...        |
@@ -269,6 +272,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 ---
 
 ## 4. Tóm tắt
+
 | Bảng              | Phạm vi          | Chứa gì                              | Mục đích |
 |-------------------|-----------------|---------------------------------------|----------|
 | File Descriptor   | Mỗi tiến trình  | Map FD → Open File Table entry        | Liên kết FD của tiến trình với file |
