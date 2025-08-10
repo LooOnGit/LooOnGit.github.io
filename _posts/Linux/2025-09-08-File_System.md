@@ -275,5 +275,19 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 | Open File Table   | Toàn hệ thống   | Offset, mode, pointer tới I-node      | Quản lý trạng thái mở file |
 | I-node Table      | Toàn hệ thống   | Thông tin file vật lý trên đĩa        | Quản lý metadata của file |
 
+
+Một process có thể có nhiều FDs cùng tham chiếu vào một vị trí trong OFD,
+Sủ dụng dup(), dup2().
+![alt text](/assets/Linux/file_system/file_manager_1.png)
+
+Hai process cùng mở một file, tham chiếu tới cùng một OFD.
+sử dụng fork().
+![alt text](/assets/Linux/file_system/file_manager_2.png)
+
+Hai process cùng mở một file, tham chiếu tới cùng một inode.
+![alt text](/assets/Linux/file_system/file_manager_3.png)
+
+
+
 ## 4. 🔒 **File Locking**
 ## 5. ⚡ **Đọc ghi File bất đồng bộ**
