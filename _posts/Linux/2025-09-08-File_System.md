@@ -290,8 +290,163 @@ sử dụng fork().
 
 Hai process cùng mở một file, tham chiếu tới cùng một inode.
 ![alt text](/assets/Linux/file_system/file_manager_3.png)
+ 
+### Quá trình đọc (`read()`):
+1. Kernel xác định page cần đọc  
+2. Kernel đọc từ page cache  
+3. Nếu page có trong page cache, thông tin sẽ được đọc ra  
+4. Nếu page không có trong page cache:  
+   - Đọc từ vùng nhớ vật lý vào page cache  
+   - Sau đó đọc ra cho userspace  
 
+### Quá trình ghi (`write()`):
+1. Kernel ghi nội dung page vào page cache  
+2. Page cache sẽ được ghi vào vùng nhớ vật lý định kỳ hoặc khi dùng các lệnh `sync()` / `fsync()`  
 
+![alt text](/assets/Linux/file_system/page_cache.png)
+
+page cache là một bộ đệm (buffer) trong RAM, lưu các page dữ liệu của file đã đọc hoặc chuẩn bị ghi, để tránh truy cập trực tiếp vào ổ đĩa quá nhiều.
 
 ## 4. 🔒 **File Locking**
+- File locking dùng để quản lý việc nhiều tiến trình cùng đọc/ghi vào 1 file.
+
+Cách hoạt động của cơ chế Lock trên File:S
+
+- **Bước 1:** Ghi trạng thái lock vào I-node của file.  
+- **Bước 2:** Nếu thành công thì thực hiện đọc/ghi file, nếu không thành công nghĩa là file đang được tiến trình khác sử dụng.  
+- **Bước 3:** Sau khi đọc/ghi xong gỡ trạng thái lock ra khỏi I-node của file.  
+
+### Flock() và Fcntl()
+
+| Flock() | Fcntl() |
+|---------|---------|
+| Đơn giản | Phức tạp |
+| Thông tin ghi vào i-node là trạng thái lock | Thông tin ghi vào i-node là trạng thái lock, khu vực lock, tiến trình lock |
+| Lock toàn bộ file | Lock được từng khu vực của file |
+| Tại một thời điểm chỉ một tiến trình đọc/ghi 1 file | Nhiều tiến trình có thể đọc/ghi cùng 1 file mà không xung đột |
+
+### Lock file với flock()
+```c
+int flock(int fd, int operation);
+```
+Flock dựa vào thông tin file descriptor để đặt trạng thái lock vào i-node table.
+
+Các đối số:
+- **fd**: file descriptor của file cần lock
+- **peration**: giá trị lock muốn set
+- **LOCK_SH**: nếu set giá trị này thành công, tiến trình có thể đọc file, không ghi.
+**LOCK_EX:** nếu set giá trị này thành công, tiến trình có thể đọc ghi file.
+- **LOCK_UN**: set giá trị này để báo file không bị lock.
+- **LOCK_NB:** nếu không dùng flag này, hàm flock sẽ không kết thúc cho tới khi set được lock.
+
+![alt text](/assets/Linux/file_system/flock_and.png)
+
+**VD**:
+`processB.c`
+```c
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+int main(void)
+{
+    int fd;
+    char buf[16] = {0};
+
+    if((fd = open("./test.txt", O_RDWR)) == -1) {
+        printf("can not open file \n");
+        return 0;
+    } else
+        printf("open file test.txt \n");
+
+    if(flock(fd, LOCK_EX) == -1)
+        printf("can not get write lock\n");
+
+    if(flock(fd, LOCK_SH | LOCK_NB) == -1)
+        printf("can not get read lock\n");
+    else {
+        printf("get read lock file\n");
+        if(read(fd, buf, sizeof(buf) - 1) == -1) {
+            printf("can not read file \n");
+            return 0;
+        } else
+            printf("%s\n", buf);
+    }
+
+    close(fd);
+
+    return 0;
+}
+```
+`ProcessA.c`
+```c
+#include <stdio.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+int main(void)
+{
+    int fd;
+    char text[16] = {0};
+
+    sprintf(text, "hello word\n");
+    if((fd = open("./test.txt", O_RDWR | O_CREAT, 0666)) == -1) {
+        printf("can not create file \n");
+        return 0;
+    } else {
+        printf("create file test.txt\n");
+    }
+
+    if(write(fd, text, sizeof(text) - 1) == -1) {
+        printf("can not write file \n");
+        return 0;
+    } else {
+        printf("write file \n");
+    }
+
+    if(flock(fd, LOCK_SH) == -1)
+        printf("can not set read lock\n");
+    else
+        printf("set read lock\n");
+
+    while(1) {
+        sleep(1);
+    }
+    close(fd);
+
+    return 0;
+}
+```
+
+### Lock file với `fcntl()`
+
+`fcntl()` linh hoạt hơn `flock()`.  
+`fcntl()` cho phép lock từng phần của file (thậm chí đến từng byte).  
+Thông tin lock được ghi vào i-node table sẽ gồm process ID, trạng thái lock, vùng lock.
+
+---
+
+**Các đối số:**
+- **fd**: file descriptor của file cần lock
+- **cmd**: action muốn thực hiện  
+  - `F_SETLK`: đặt lock, bỏ lock  
+  - `F_GETLK`: đọc thông tin lock
+- **flockstr**: thông tin muốn lock (gồm trạng thái lock, vùng muốn lock, process lock)
+
+---
+
+**Cấu trúc `struct flock`:**
+```c
+struct flock {
+    short l_type;    /* Lock type: F_RDLCK, F_WRLCK, F_UNLCK */
+    short l_whence;  /* How to interpret 'l_start': SEEK_SET, SEEK_CUR, SEEK_END */
+    off_t l_start;   /* Offset where the lock begins */
+    off_t l_len;     /* Number of bytes to lock; 0 means "until EOF" */
+    pid_t l_pid;     /* Process preventing our lock (F_GETLK only) */
+};
+
 ## 5. ⚡ **Đọc ghi File bất đồng bộ**
