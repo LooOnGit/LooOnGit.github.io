@@ -62,14 +62,19 @@ static int y;
 int *arr = (int *)malloc(10 * sizeof(int));
 ```
 
+#### Cơ chế cấp phát bộ nhớ Heap
+- **Memory allocator** (bộ cấp phát bộ nhớ) sẽ tìm kiếm một vùng trống đủ lớn trong heap.
+- Đánh dấu vùng nhớ đó là "đang được sử dụng".
+- Trả về một con trỏ (pointer) - chính địa chỉ của vùng nhớ được cấp phát.
+
 ### 🌀 Stack 
 - Dành cho biến cục bộ, lời gọi hàm.
 - Quản lý theo cơ chế LIFO (Last In, First Out).
 - Tự động thu hồi sau khi thoát khỏi khối lệnh.
 - Vùng nhớ Stack sẽ cấp phát theo xu hướng giảm người là cấp phát từ địa chỉ cao đến thấp.
 
-Dac diem stack: tat ca du lieu duoc luu tru tren stack phai co kich thuoc co dinh va da biet truoc, tuc la tai thoi diem bien dich, chuong trinh phai biet chinh xac moi bien chiem bao nhieu byte trong bo nho.
-
+**Đặc điểm của stack:**
+Tất cả dữ liệu được lưu trữ trên stack phải có kích thước cố định và đã biết trước.Điều này có nghĩa là tại thời điểm biên dịch, chương trình phải biết chính xác mỗi biến sẽ chiếm bao nhiêu byte trong bộ nhớ.
 
 ## 🧪 Ví dụ minh họa
 
@@ -95,3 +100,24 @@ int main() {
     return 0;
 }
 ```
+
+### Chú ý
+- Con trỏ thường được lưu trữ trên stack (vì nó có kích thước cố định), nhưng để truy cập dữ liệu thực tế, chương trình phải "theo" con trỏ đến heap.
+
+#### Stack và Heap khác nhau 
+- Stack: LIFO, fixed size, fast access, automatic management
+- Heap: Dynamic size, slower, manual management, accessed via pointers
+- Stack lưu local variables, Heap lưu dynamic data
+
+#### Tại sao Stack nhanh hơn Heap?
+- Stack lưu trữ dữ liệu rất nhanh vì chỉ cần đánh dấu vị trí mới trên “chồng” dữ liệu.
+- Heap thì phải tìm chỗ trống phù hợp để lưu dữ liệu, nên chậm hơn.
+- Dữ liệu trên stack nằm sát nhau nên máy tính dễ truy cập và chạy nhanh hơn (CPU cache hiệu quả)
+- Khi dùng heap, bạn phải dùng thêm một biến trung gian (con trỏ) để truy cập, nên sẽ chậm hơn một chút.
+
+#### Memory leak xảy ra ở đâu và tại sao?
+- Memory leak chủ yếu xảy ra ở Heap
+- Stack tự động giải phóng bộ nhớ khi function return (kết thúc hàm)
+- Heap cần lập trình viên phải tự giải phóng bộ nhớ. Nếu quên giải phóng → memory leak
+- Dangling pointer: Bộ nhớ được giải phóng rồi vẫn access
+
