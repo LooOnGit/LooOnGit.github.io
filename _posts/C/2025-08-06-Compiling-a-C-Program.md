@@ -1,7 +1,7 @@
 ---
 title: Quá trình biên dịch một chương trình C
 author: Loo
-date: 2025-08-06
+date: 2025-08-06 16:07:09 +0800
 categories: [C]
 tags: [C]
 ---

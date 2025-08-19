@@ -1,6 +1,6 @@
 ---
 title: "Memory Segmentation"
-date: 2025-07-23 08:12:60 +0800
+date: 2025-07-23 08:12:13 +0800
 categories: [C]
 tags: [C]
 ---

@@ -1,6 +1,6 @@
 ---
 title: "Storage Class Specifiers "
-date: 2025-07-23 08:54:60 +0800
+date: 2025-07-23 08:54:53 +0800
 categories: [C]
 tags: [C]
 ---

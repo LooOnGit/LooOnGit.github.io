@@ -1,6 +1,6 @@
 ---
 title: "Preprocessor"
-date: 2025-07-23 09:56:00 +0800
+date: 2025-07-23 09:56:21 +0800
 categories: [C]
 tags: [C]
 ---

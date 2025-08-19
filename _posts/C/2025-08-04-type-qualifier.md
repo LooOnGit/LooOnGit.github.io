@@ -1,7 +1,7 @@
 ---
 title: Type Qualifiers
 author: Loo
-date: 2025-08-04
+date: 2025-08-04 06:37:29 +0800
 categories: [C]
 tags: [C]
 ---
