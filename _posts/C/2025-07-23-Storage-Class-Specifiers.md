@@ -77,6 +77,7 @@ void example() {
 - Phạm vi: Biến hoặc hàm có thể truy cập từ các file khác.
 - Liên kết: Biến hoặc hàm được định nghĩa ở nơi khác, có thể truy cập từ nhiều file.
 - Thời gian sống: Biến tồn tại suốt chương trình.
+
 ```c
 // file1.c
 extern int globalVariable;  // Biến được khai báo là extern

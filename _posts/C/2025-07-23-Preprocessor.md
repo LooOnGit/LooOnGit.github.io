@@ -223,3 +223,32 @@ printf("%s\n", L); // Kết quả: Welcome to DEVIOT
 
 #### Ứng dụng thực tế:
 Khi làm việc với các dự án lớn, việc sử dụng `#undef` giúp tránh xung đột định nghĩa macro giữa các file khác nhau, đặc biệt khi các file có thể sử dụng cùng một tên macro nhưng với giá trị khác nhau.
+
+### #error
+Dùng để báo lỗi biên dịch nếu gặp điều kiện không hợp lệ.
+```c
+#ifndef PI
+#error "PI is not defined"
+#endif
+```
+
+### `__FILE__`, `__LINE__`, `__func__`
+Các macro đặc biệt có sẵn trong C:
+- **__FILE__**→ tên file hiện tại.
+- **__LINE__**→ số dòng hiện tại.
+- **__func__**→ tên hàm hiện tại.
+```c
+printf("Error in file %s, line %d, function %s\n", __FILE__, __LINE__, __func__);
+```
+
+### Conditional Compilation (Biên dịch có điều kiện)
+- Cho phép biên dịch một phần code tùy theo điều kiện.
+```c
+#define WINDOWS
+
+#ifdef WINDOWS
+    printf("Windows code\n");
+#else
+    printf("Other OS code\n");
+#endif
+```
