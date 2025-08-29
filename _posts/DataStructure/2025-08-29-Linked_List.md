@@ -1,6 +1,6 @@
 ---
 title: "Linked List"
-date: 2025-07-29 23:02:00 +0800
+date: 2025-08-29 23:02:00 +0800
 categories: [Data Structure]
 tags: [Data Structure]
 ---
