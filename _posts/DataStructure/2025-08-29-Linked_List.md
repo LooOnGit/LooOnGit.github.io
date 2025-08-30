@@ -176,3 +176,154 @@ List: 3 -> 4 -> 5 -> NULL
 
 **Dưới đây là quản lý data structure:**
 ![alt text](/assets/DataStructure/LinkedList/Do1.png)
+
+## 📚 Các thao tác với Linked List
+
+### 1. Thao tác cơ bản với Node đầu (Head) 🎯
+
+```c
+// Thêm node vào đầu
+void insertAtHead(Node** head, int data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->next = *head;
+    *head = newNode;
+}
+
+// Xóa node đầu
+void deleteHead(Node** head) {
+    if (*head == NULL) return;
+    Node* temp = *head;
+    *head = (*head)->next;
+    free(temp);
+}
+```
+
+### 2. Thao tác với Node cuối (Tail) 🔚
+
+```c
+// Thêm node vào cuối
+void insertAtTail(Node** head, int data) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    newNode->next = NULL;
+    
+    if (*head == NULL) {
+        *head = newNode;
+        return;
+    }
+    
+    Node* last = *head;
+    while (last->next != NULL)
+        last = last->next;
+    last->next = newNode;
+}
+
+// Xóa node cuối
+void deleteTail(Node** head) {
+    if (*head == NULL) return;
+    
+    if ((*head)->next == NULL) {
+        free(*head);
+        *head = NULL;
+        return;
+    }
+    
+    Node* second_last = *head;
+    while (second_last->next->next != NULL)
+        second_last = second_last->next;
+        
+    free(second_last->next);
+    second_last->next = NULL;
+}
+```
+
+### 3. Thao tác tìm kiếm và đếm 🔍
+
+```c
+// Tìm kiếm phần tử
+Node* search(Node* head, int key) {
+    Node* current = head;
+    while (current != NULL) {
+        if (current->data == key)
+            return current;
+        current = current->next;
+    }
+    return NULL;
+}
+
+// Đếm số node
+int countNodes(Node* head) {
+    int count = 0;
+    Node* current = head;
+    while (current != NULL) {
+        count++;
+        current = current->next;
+    }
+    return count;
+}
+```
+
+### 4. Thao tác đảo ngược danh sách 🔄
+
+```c
+// Đảo ngược danh sách
+void reverse(Node** head) {
+    Node *prev = NULL, *current = *head, *next = NULL;
+    while (current != NULL) {
+        next = current->next;
+        current->next = prev;
+        prev = current;
+        current = next;
+    }
+    *head = prev;
+}
+```
+
+### 5. Thao tác với vị trí bất kỳ 📍
+
+```c
+// Chèn vào vị trí bất kỳ
+void insertAt(Node** head, int position, int data) {
+    if (position < 0) return;
+    
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    newNode->data = data;
+    
+    if (position == 0) {
+        newNode->next = *head;
+        *head = newNode;
+        return;
+    }
+    
+    Node* current = *head;
+    for (int i = 0; i < position - 1 && current != NULL; i++)
+        current = current->next;
+        
+    if (current == NULL) return;
+    
+    newNode->next = current->next;
+    current->next = newNode;
+}
+```
+
+### 6. Kiểm tra và xử lý lỗi ⚠️
+
+```c
+// Kiểm tra danh sách rỗng
+bool isEmpty(Node* head) {
+    return head == NULL;
+}
+
+// Kiểm tra vòng lặp trong danh sách
+bool hasLoop(Node* head) {
+    Node *slow = head, *fast = head;
+    while (fast != NULL && fast->next != NULL) {
+        slow = slow->next;
+        fast = fast->next->next;
+        if (slow == fast)
+            return true;
+    }
+    return false;
+}
+```
