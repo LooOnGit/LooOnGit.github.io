@@ -7,10 +7,43 @@ tags: [Data Structure]
 
 # 📝 LINKED LIST (DANH SÁCH LIÊN KẾT)
 
-## Danh sách liên kết là gì?
-Danh sách liên kết là một tập hợp các node được phân bổ động, được sắp xếp theo cách mà mỗi node sẽ được chứa một giá trị và một con trỏ trỏ đến node tiếp theo nó. Nếu con trỏ là NULL, thì nó là nút cuối cùng trong danh sách.
+## 🎯 Danh sách liên kết là gì?
+Danh sách liên kết là một cấu trúc dữ liệu tuyến tính hoạt động như một mảng có thể phát triển và thu nhỏ khi cần thiết, từ bất kỳ điểm nào trong mảng.
 
-Một danh sách được liên kết được giữ ằng cách sử dụng một biến con trỏ trỏ đến mục đầu tiên của danh sách. Nếu con trỏ đó cũng là NULL, thì danh sách được coi là trống.
+## 🌟 Đặc điểm cơ bản
+
+1. **Cấu trúc cơ bản**
+   - Một tập hợp các node được phân bổ động
+   - Mỗi node chứa một giá trị và một con trỏ trỏ đến node tiếp theo
+   - Node cuối cùng trỏ đến NULL
+
+2. **Quản lý danh sách**
+   - Sử dụng một biến con trỏ (head) trỏ đến phần tử đầu tiên
+   - Danh sách rỗng khi con trỏ head là NULL
+
+## ✨ Ưu điểm so với mảng thông thường
+
+1. **Tính linh hoạt cao**
+   - Có thể thêm hoặc bớt các phần tử từ bất kỳ vị trí nào
+   - Không cần xác định kích thước ban đầu
+   - Tối ưu việc sử dụng RAM - cấp phát khi cần
+
+## ⚠️ Nhược điểm và hạn chế
+
+1. **Hạn chế truy cập**
+   - Không hỗ trợ truy cập ngẫu nhiên
+   - Phải duyệt từ đầu danh sách để tìm phần tử
+   - Tốc độ truy cập chậm hơn so với mảng
+
+2. **Vấn đề về bộ nhớ**
+   - Cần thêm bộ nhớ cho con trỏ
+   - Phức tạp trong quản lý bộ nhớ
+   - Nguy cơ rò rỉ bộ nhớ cao hơn (cấp phát động quên free thì tăng rò rỉ bộ nhớ).
+
+3. **Hiệu suất cache**
+   - Không liên tục trong bộ nhớ
+   - Hiệu quả cache thấp hơn mảng
+   - Tốc độ xử lý có thể bị ảnh hưởng
 
 ![alt text](/assets/DataStructure/LinkedList/Node_LinkedList.png)
 
@@ -88,18 +121,6 @@ void deleteNode(struct Node** head, int key) {
 }
 ```
 
-## ⚖️ Ưu và nhược điểm
-
-### Ưu điểm ✅
-- Kích thước động
-- Dễ dàng thêm/xóa phần tử
-- Không cần cấp phát bộ nhớ liên tục
-
-### Nhược điểm ❌
-- Không truy cập ngẫu nhiên
-- Cần thêm bộ nhớ cho con trỏ
-- Không hiệu quả trong cache
-
 ## 🔍 Độ phức tạp
 
 | Thao tác | Thời gian |
@@ -143,8 +164,15 @@ int main() {
     push(&head, 4);
     push(&head, 3);
     
-    printf("Danh sách liên kết: ");
+    printf("List: ");
     printList(head);
     return 0;
 }
 ```
+**Kết quả**
+```bash
+List: 3 -> 4 -> 5 -> NULL
+```
+
+**Dưới đây là quản lý data structure:**
+![alt text](/assets/DataStructure/LinkedList/Do1.png)
