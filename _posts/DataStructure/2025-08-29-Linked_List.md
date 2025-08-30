@@ -49,8 +49,6 @@ Danh sách liên kết là một cấu trúc dữ liệu tuyến tính hoạt đ
 
 Tối ưu hóa dùng RAM mỗi lần dùng thì bắt đầu tạo ra phần từ. Không cần tạo ra 1 lượt, đỡ bị phân mãnh.
 
-**Khác cấp phát động và Cấp phát tĩnh:**
-
 
 ## 🔄 Các loại Linked List
 
