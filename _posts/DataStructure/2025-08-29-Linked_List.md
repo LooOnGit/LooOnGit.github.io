@@ -81,44 +81,6 @@ struct DNode {
 };
 ```
 
-## 🛠️ Các thao tác cơ bản
-
-### 1. Thêm node mới (Insert) ➕
-
-```c
-// Thêm vào đầu danh sách
-void insertAtBeginning(struct Node** head, int data) {
-    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
-    newNode->data = data;
-    newNode->next = *head;
-    *head = newNode;
-}
-```
-
-### 2. Xóa node (Delete) ❌
-
-```c
-void deleteNode(struct Node** head, int key) {
-    struct Node *temp = *head, *prev = NULL;
-    
-    if (temp != NULL && temp->data == key) {
-        *head = temp->next;
-        free(temp);
-        return;
-    }
-    
-    while (temp != NULL && temp->data != key) {
-        prev = temp;
-        temp = temp->next;
-    }
-    
-    if (temp == NULL) return;
-    
-    prev->next = temp->next;
-    free(temp);
-}
-```
-
 ## 🔍 Độ phức tạp
 
 | Thao tác | Thời gian |
@@ -175,7 +137,7 @@ List: 3 -> 4 -> 5 -> NULL
 **Dưới đây là quản lý data structure:**
 ![alt text](/assets/DataStructure/LinkedList/Do1.png)
 
-## 📚 Các thao tác với Linked List
+## 🛠️ Các thao tác với Linked List
 
 ### 1. Thao tác cơ bản với Node đầu (Head) 🎯
 
