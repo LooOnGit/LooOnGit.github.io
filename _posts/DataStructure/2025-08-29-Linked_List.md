@@ -56,13 +56,23 @@ Tối ưu hóa dùng RAM mỗi lần dùng thì bắt đầu tạo ra phần t�
    - Mỗi node chứa dữ liệu và con trỏ next
    - Chỉ có thể duyệt theo một chiều
 
+![alt text](/assets/DataStructure/LinkedList/Singly_Linked_List.png)
+
 2. **Doubly Linked List** ↔️
    - Mỗi node chứa dữ liệu và hai con trỏ (prev & next)
    - Có thể duyệt theo cả hai chiều
 
+![alt text](/assets/DataStructure/LinkedList/Doubly_Linked_List.png)
+
 3. **Circular Linked List** 🔄
    - Node cuối trỏ về node đầu
    - Có thể là singly hoặc doubly
+
+`Circular Singly Linked List`
+![alt text](/assets/DataStructure/LinkedList/Circular_Singly_Linked_List.png)
+
+`Circular Doubly Linked List`
+![alt text](/assets/DataStructure/LinkedList/Circular_Doubly_Linked_List.png)
 
 ## 💡 Cấu trúc Node
 
