@@ -47,28 +47,7 @@ graph LR
 
 ## ⚡ Trạng thái Buffer
 
-### 1. Buffer Rỗng
-```
-Read = Write
-[ ][ ][ ][ ][ ][ ]
- ^
-R/W
-```
-
-### 2. Buffer Đầy
-```
-(Write + 1) % Size = Read
-[1][2][3][4][5][6]
- ^             ^
- R             W
-```
-
-### 3. Buffer Đang Sử Dụng
-```
-[1][2][3][ ][ ][ ]
-       ^     ^
-       R     W
-```
+![Queue Example](/assets/DataStructure/RingBuffer/RingBuffer.png)
 
 ## 🔧 Cài đặt cơ bản
 
