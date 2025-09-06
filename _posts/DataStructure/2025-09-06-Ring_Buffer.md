@@ -9,141 +9,131 @@ tags: [Data Structure]
 
 ## 📝 Ring Buffer là gì?
 
-Ring Buffer là một cấu trúc dữ liệu dạng FIFO (First In First Out) có kích thước cố định, được thiết kế để:
+Ring Buffer (còn gọi là circular queue) là một cấu trúc dữ liệu dạng FIFO (First In First Out) có kích thước cố định, được thiết kế để:
 - Lưu trữ dữ liệu tạm thời
 - Quản lý bộ nhớ hiệu quả
 - Xử lý dữ liệu streaming
 
-## 🎯 Nguyên lý hoạt động
+## So với linear queue
 
-```mermaid
-graph LR
-    A((Write)) --> B[1]
-    B --> C[2]
-    C --> D[3]
-    D --> E[4]
-    E --> F((Read))
-    F -.-> B
-    style A fill:#f96,stroke:#333,stroke-width:2px
-    style F fill:#69f,stroke:#333,stroke-width:2px
-```
+Đối với queue thông thường việc thêm và xóa đi phần tử, sẽ có khoảng trống không sử dụng được.
 
-## 💡 Các thành phần chính
+## 💡Circular Queue hoạt động như thế nào?
+1. Khởi tạo array có size là n, trong đó n là số lượng phần tử tối đã của queue.
+2. Khởi tạo 3 giá trị (size, capacity and front).
+3. **Enqueue:** Để enqueue một phần từ x vào queue, làm như sau:
+    1. Kiểm tra nếu size ==  capacity (queue là full), display "Queue if full".
+    2. Nếu không full: tính `rear = (front + size) % capacity` và đưa vào giá trị ở phần tử thứ rear. Tăng size lên 1.
+4. **Dequeue:** 
+    1. Kiểm tra nếu size == 0 (queue là rỗng).
+    2. Nếu không rỗng: Lấy phần tử ở front index và di chuyển đến front = (front + 1) % capacity. Ngoài ra, giảm size xuống 1 đơn vị.
 
-1. **Buffer Array** 📦
-   - Mảng có kích thước cố định
-   - Lưu trữ dữ liệu theo kiểu vòng tròn
-   - Thường có kích thước là lũy thừa của 2
-
-2. **Write Pointer** ✍️
-   - Chỉ vị trí ghi tiếp theo
-   - Di chuyển theo chiều thuận
-   - Quay về đầu khi đến cuối
-
-3. **Read Pointer** 👀
-   - Chỉ vị trí đọc tiếp theo
-   - Theo sau Write Pointer
-   - Không vượt quá Write Pointer
-
-## ⚡ Trạng thái Buffer
+![Queue Example](/assets/DataStructure/RingBuffer/page1.png)
+![Queue Example](/assets/DataStructure/RingBuffer/page2.png)
+![Queue Example](/assets/DataStructure/RingBuffer/page3.png)
+![Queue Example](/assets/DataStructure/RingBuffer/page4.png)
+![Queue Example](/assets/DataStructure/RingBuffer/page5.png)
+![Queue Example](/assets/DataStructure/RingBuffer/page6.png)
 
 ![Queue Example](/assets/DataStructure/RingBuffer/RingBuffer.png)
 
-## 🔧 Cài đặt cơ bản
+## Code
 
 ```c
-#define BUFFER_SIZE 8
+#include <stdio.h>
+#include <stdbool.h>
+#define MAX_SIZE 4
 
+//defining the Queue structure
 typedef struct {
-    uint8_t data[BUFFER_SIZE];
-    uint32_t read;
-    uint32_t write;
-} RingBuffer;
+    int items[MAX_SIZE];
+    int front;
+    int size;
+    int capacity;
+}Queue;
 
-void init(RingBuffer* rb) {
-    rb->read = 0;
-    rb->write = 0;
+// Function to initialize the queue
+void initializeQueue(Queue* q) {
+    q->capacity = MAX_SIZE;
+    q->size = 0;
+    q->front = 0;
+}
+
+//Function to check if the queue is empty
+bool isEmpty(Queue* q) { return (q->size == 0); }
+
+//Function to check if the queue is full
+bool isFull(Queue* q) { return (q->size == q->capacity); }
+
+
+//Function to add an element to the queue (Enqueue operation)
+void enqueue(Queue* q, int value) {
+    if (isFull(q)) {
+        printf("Queue is full\n");
+        return;
+    }
+    int rear = (q->front + q->size) % q->capacity;
+    q->items[rear] = value;
+    q->size++;
+}
+
+//Function to remove an element to the queue (Dequeue operation)
+int dequeue(Queue* q) {
+    if (isEmpty(q)) {
+        printf("Queue is empty\n");
+        return -1;
+    }
+    int res =  q->items[q->front];
+    q->front = (q->front + 1) % q->capacity;
+    q->size--;
+    return res;
+}
+
+// Get the front element
+int getFront(Queue q) {
+
+    // Queue is empty
+    if (q.size == 0)
+        return -1;
+    return q.items[q.front];
+}
+
+// Get the rear element
+int getRear(Queue q) {
+
+    // Queue is empty
+    if (q.size == 0)
+        return -1;
+    int rear = (q.front + q.size - 1) % q.capacity;
+    return q.items[rear];
+}
+
+int main(void) {
+    Queue q;
+    initializeQueue(&q);
+
+    enqueue(&q, 30);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+
+    enqueue(&q, 40);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+
+    enqueue(&q, 80);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+
+    enqueue(&q, 90);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+
+    dequeue(&q);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+
+    dequeue(&q);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+
+    enqueue(&q, 1000);
+    printf("%d\t %d\n", getFront(q), getRear(q));
+    return 0;
 }
 ```
 
-## 🚀 Ứng dụng phổ biến
 
-1. **Nhúng (Embedded)** 🔌
-   - UART/Serial Communication
-   - ADC Data Collection
-   - Sensor Data Buffering
-
-2. **Audio Processing** 🎵
-   - Audio Buffering
-   - Digital Signal Processing
-   - Real-time Audio Streaming
-
-3. **Network** 🌐
-   - Packet Buffering
-   - Message Queuing
-   - Data Streaming
-
-## ⚠️ Lưu ý khi sử dụng
-
-1. **Race Condition** 🏃
-   - Cần mutex trong đa luồng
-   - Atomic operations
-   - Critical section protection
-
-2. **Buffer Overflow** ⚡
-   ```c
-   if (isFull(rb)) {
-       // Xử lý khi buffer đầy
-       // 1. Overwrite
-       // 2. Drop new data
-       // 3. Wait
-   }
-   ```
-
-3. **Buffer Underflow** 📉
-   ```c
-   if (isEmpty(rb)) {
-       // Xử lý khi buffer rỗng
-       return ERROR_BUFFER_EMPTY;
-   }
-   ```
-
-## 💪 Ví dụ thực tế
-
-### Producer-Consumer Pattern
-```c
-// Producer
-void produce(RingBuffer* rb, uint8_t data) {
-    while (isFull(rb)) {
-        // Wait or handle full condition
-    }
-    write(rb, data);
-}
-
-// Consumer
-uint8_t consume(RingBuffer* rb) {
-    while (isEmpty(rb)) {
-        // Wait or handle empty condition
-    }
-    return read(rb);
-}
-```
-
-## 🎮 Testing và Debug
-
-```c
-void debugPrint(RingBuffer* rb) {
-    printf("Buffer Status:\n");
-    printf("Size: %d\n", BUFFER_SIZE);
-    printf("Read: %d\n", rb->read);
-    printf("Write: %d\n", rb->write);
-    printf("Content: ");
-    
-    for (int i = 0; i < BUFFER_SIZE; i++) {
-        if (i == rb->read) printf("R");
-        if (i == rb->write) printf("W");
-        printf("[%d]", rb->data[i]);
-    }
-    printf("\n");
-}
-```
