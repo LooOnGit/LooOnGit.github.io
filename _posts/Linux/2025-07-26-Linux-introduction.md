@@ -50,3 +50,25 @@ Bringup, Porting hệ điều hành lên cái phần cứng đã designed.
 
 ### B1.1: Application Development | Phát triển ứng dụng
 - Viết app
+
+
+## Soạn thảo code (code editor)
+### Vim 
+Vim có 2 mode là command và insert
+- Nhấn phím esc sẽ chuyển sang command.
+- Nhấn "i" sẽ chuyển sang mode insert.
+
+## Compiler
+- gcc
+
+## Chạy và debbug (debugger)
+- gdb
+
+## Lập trình dùng graphic
+- Vscode
+- cài ssh server lên ubuntu
+```c
+sudo apt install opensh-server
+```
+
+- debian/temppwd

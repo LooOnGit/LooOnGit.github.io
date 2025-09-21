@@ -1,9 +1,19 @@
 ---
-title: "File System"
+title: "File System trong Linux"
 date: 2025-08-09 14:06:00 +0800
 categories: [Linux]
-tags: [Linux]
+tags: [Linux, File System]
 ---
+
+# 📚 Mục lục
+
+## 1. Tổng quan
+- Bản chất của File trong Linux
+- Phân loại tệp tin
+- Quản lý quyền truy cập
+
+## 2. Nội dung chính
+
 # 🐧 Linux File Management
 
 ## 1. 📂 **Tổng quan về File trên Linux**
@@ -11,8 +21,11 @@ tags: [Linux]
 
 ### 📑 Các loại file trên Linux
 
-- **📄 Regular file**: là các file thông thường như text file, executable file.
+- **📄 Regular file**: là các file thông thường như text file, executable file. Là các file chứa dũ liệu và tồn tại thực tế trong ổ cứng, không bị mất đi khi klhởi động lại hệ thống, mỗi loại file sẽ có format dữ liệu riêng.
 - **📁 Directories file**: file chứa danh sách các file khác.
+
+#### Các loại file khác: 
+Thuòng những loại file này do hệ điều hành sinh ra khi bật lên vả biến mất khi tắt đi.
 - **🖴 Character Device file**: file đại diện cho các thiết bị không có địa chỉ vùng nhớ.
 - **💽 Block Device file**: file đại diện cho các thiết bị có địa chỉ vùng nhớ.
 Dùng lệnh `ls /dev/` để xem các thiết bị đang connect
@@ -183,9 +196,9 @@ int main(void) {
 ```
 khi mà open thì chiều từ phải sang trái. Khi đọc và ghi thì ngược lại(file descriptor -> Open file table -> I-node table)
 
-# Quản lý file trong Kernel: File Descriptor Table, Open File Table và I-node Table
+# 🔧 Quản lý file trong Kernel: File Descriptor Table, Open File Table và I-node Table
 
-## 1. Giới thiệu
+## 📋 1. Giới thiệu
 Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một file (`open()`), kernel cần biết:
 - Tiến trình nào đang mở file gì.
 - Trạng thái đọc/ghi đến đâu.
@@ -196,9 +209,9 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 
 ---
 
-## 2. Ba bảng quản lý file
+## 📊 2. Ba bảng quản lý file
 
-### 2.1. File Descriptor Table (per-process table)
+### 📑 2.1. File Descriptor Table (per-process table)
 - **Mỗi tiến trình** có **một bảng riêng** lưu các **file descriptor** (FD).
 - Mỗi FD là một số nguyên (0, 1, 2, …) trỏ tới **một entry** trong **Open File Table**.
 - 3 FD mặc định khi tạo tiến trình:
@@ -218,7 +231,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 
 ---
 
-### 2.2. Open File Table (system-wide, shared)
+### 📂 2.2. Open File Table (system-wide, shared)
 - Lưu thông tin về **một lần mở file**.
 - Có thể được **chia sẻ giữa nhiều tiến trình** (vd: khi fork, hoặc khi dup FD).
 - Mỗi entry chứa:
@@ -234,7 +247,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 
 ---
 
-### 2.3. I-node Table (system-wide, shared)
+### 💾 2.3. I-node Table (system-wide, shared)
 - Lưu thông tin **về bản thân file** trên đĩa.
 - Thông tin gồm:
   - Kích thước file.
@@ -251,7 +264,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 
 ---
 
-## 3. Mối quan hệ giữa 3 bảng
+## 🔄 3. Mối quan hệ giữa 3 bảng
 ```
 [File Descriptor Table của tiến trình]
          ↓
@@ -271,7 +284,7 @@ Trong hệ điều hành kiểu Unix/Linux, khi một tiến trình mở một f
 
 ---
 
-## 4. Tóm tắt
+## ✨ 4. Tóm tắt
 
 | Bảng              | Phạm vi          | Chứa gì                              | Mục đích |
 |-------------------|-----------------|---------------------------------------|----------|
@@ -448,5 +461,40 @@ struct flock {
     off_t l_len;     /* Number of bytes to lock; 0 means "until EOF" */
     pid_t l_pid;     /* Process preventing our lock (F_GETLK only) */
 };
+```
 
 ## 5. ⚡ **Đọc ghi File bất đồng bộ**
+
+
+## 💻 Các hàm đọc ghi dữ liệu trong file
+Lập trình thao tác vói file sẽ tuân theo 3 bước:
+- Mở file
+```c
+open()
+```
+- Thao tác với file - đọc hoặc ghi
+```c
+read()
+write()
+```
+
+- Đóng file
+```c
+close()
+```
+
+- ssize_t write(int fd, const void *buf, size_t count)
+- off_t lseek(int fd, off_t offset, int whence)
+- void sync(void).
+
+## ⚡ Cached data của file
+#### Hệ thống sử dụng 1 phần RAM làm bộ nhớ cached cho việc đọc file.
+- Việc đcọ ghi dữ liuệ trong file thông  sẽ oọc qua cached để tăng tốc độ của hệ thống. Ví dụ như việc đọc 1 byte tù ổ cứng khi đó OS vẫn đcọ cả sector là 512 bytes, tuy nhiên chỉ lấy 1 bytes trả về cho app, số bytes còn lại được cất vào cached nằm trong RAM, nếu lần đọc data nàm trong sector đó thì sẽ lấy tù cached mà không cần đọc xuống ổ cứng.
+- Việc ghi data thông thuòng OS sẽ ghi vào cached nằm trong RAM. Trong kernel có 1 thread sẽ định kỳ flush tất cả các cached và file. Ngoài ra có thể sử dụng sync() hoặc setting flag lúc open file để chỉ định không sử dụng cached. Wakeup flush threads: kernel 4.14
+
+#### Mỗi file khi open sẽ tạo ra inode . Mỗi inode sẽ có trỏ đến vùng nhớ cached riêng của nó.
+- **Source code:** struct inode -> mapping
+
+#### Bộ nhớ cached của 1 file có thể được flush theo cách chủ động hoặc bị động
+- Chủ động flush cached: gọi hàm flush, sync(), fsync() hoặc close() file
+- Bị động flush cached: Process kết thúc bằng hàm exit hoặc câu lệnh return hoặc được kernel thread flush cached.
