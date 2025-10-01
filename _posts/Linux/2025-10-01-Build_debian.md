@@ -81,7 +81,7 @@ Khi build này nó bị revert hết tải lại code mới build lại từ đ�
 
 **Lỗi**
 do hệ thống make file không tốt
-![alt text](image-13.png)
+![alt text](/assets/Linux/Build_debian/image-13.png)
 
 ```c
 sudo apt-get install lzop
@@ -147,7 +147,7 @@ sudo dd if=./u-boot/u-boot-dtb.img of=${DISK} count=4 seek=1 bs=384k
 ```
 chip bật nguồn lên CPU sẽ nạp boot ROM trong chip BOOT nạp từ khi chip trong nhà máy.
 
-![alt text](image-14.png)
+![alt text](/assets/Linux/Build_debian/image-14.png)
 
 ```c
 #Check the version of sfdisk installed on your pc is atleast 2.26.x or newer.

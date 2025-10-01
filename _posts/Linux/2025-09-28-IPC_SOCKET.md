@@ -7,12 +7,6 @@ tags: [Linux]
 
 # 🔌 IPC Socket trong Linux
 
-## 📚 Mục lục
-1. [Introduction](#1-introduction)
-2. [Work Flow](#2-work-flow)
-3. [Sockets: Internet Domain Socket](#3-sockets-internet-domain-socket)
-4. [Sockets: Unix Domain](#4-sockets-unix-domain)
-
 ## 1. Introduction
 
 ### 🎯 Khái niệm
@@ -213,7 +207,7 @@ int main() {
 ```
 
 ### Datagram sockets
-![Stream Socket Flow](/assets/Linux/IPC_SOCKET/datagram_socket.png)
+![alt text](/assets/Linux/IPC_SOCKET/datagram_socket.png)
 
 #### **sendto() - Gửi dữ liệu:**
 ```c
@@ -370,7 +364,9 @@ addr.sin_addr.s_addr = htonl(IP);   // Chuyển IP address
 - 🔄 Kiểm tra pathname length
 
 ### 📋 Chi tiết cấu trúc Socket Address
-![Stream Socket Flow](/assets/Linux/IPC_SOCKET/network.png)
+
+![alt text](/assets/Linux/IPC_SOCKET/network.png)
+
 #### 1. Cấu trúc sockaddr_in cho IPv4
 ```c
 struct sockaddr_in {
