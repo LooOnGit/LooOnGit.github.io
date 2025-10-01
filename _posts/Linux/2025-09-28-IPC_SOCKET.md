@@ -245,12 +245,10 @@ ssize_t recvfrom(int sockfd, void *buf, size_t len, int flags,
 - `src_addr`: Địa chỉ nguồn gửi
 - `addrlen`: Độ dài của cấu trúc địa chỉ
 
-
-
 ## 3. Socket Domains
 
 ### 🌐 Internet Domain Socket (AF_INET)
-Cho phép giao tiếp giữa các processes trên các thiết bị khác nhau qua mạng.
+Cho phép giao tiếp giữa 2 processes trên các thiết bị khác nhau qua mạng.
 
 **Đặc điểm:**
 - 🔹 Sử dụng IPv4 addressing
