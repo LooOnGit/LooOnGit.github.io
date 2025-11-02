@@ -25,8 +25,9 @@ Ngoài các kiểu dữ liệu bạn đã học như `short`, `int`, `long`, `do
 | `double` | 8 bytes | *Chưa xác định* (khoảng 15 chữ số thập phân)| `double e = 2.71828;` |
 
 ## Data Formats
+
 | 🎯 Định dạng (Specifier) | 📦 Kiểu dữ liệu (Data Type) | 📝 Ví dụ (Example) | 💡 Công dụng |
-|:---|:---|:---|:---|
+|:-------------------------|:-----------------------------|:-------------------|:-------------|
 | `%c` | `char` | `"%c"` | In một ký tự đơn. |
 | `%s` | `char *` (chuỗi ký tự) | `"%8s"`, `"%-10s"` | In một chuỗi. Có thể định độ rộng, canh lề. |
 | `%d`, `%i` | `int`, `short` | `"%-2d"`, `"%03d"` | In số nguyên hệ thập phân (có dấu). |
