@@ -1,6 +1,6 @@
 ---
 title: "Enviroment"
-date: 2025-01-11 13:56:25 +0800
+date: 2025-11-09 13:56:25 +0800
 categories: [BeagleBone]
 tags: [BeagleBone]
 ---
@@ -27,4 +27,5 @@ Dùng chip AM335x tổng cộng có 128 pin chia làm 4 group gpio, mỗi bank c
 - GPIO bank 2 (64-95)
 - GPIO bank 3 (96-128)
 Links: [AM335x](https://www.ti.com/lit/ug/spruh73q/spruh73q.pdf?ts=1762611603905&ref_url=https%253A%252F%252Fwww.ti.com%252Fproduct%252FAM3358%253F)
+
 
