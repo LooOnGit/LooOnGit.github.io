@@ -113,3 +113,89 @@ cái class được tạo cuối cùng.
 
 Chạy file thực thi và check kết quả:
 ![alt text](/assets/BeagleBone/Character_device_file/result_class.png)
+
+Bước tiếp theo để đọc ghi dữ liệu từ thiết bị thì phải dùng device file để ghi xuống thanh ghi.
+
+## Register File operation
+- **struct file_operat** là một phần tử của struct cdev.
+- Định nghĩa toàn bộ các hoạt động của file (open/read/write/close/mmap/ioctl).
+![alt text](/assets/BeagleBone/Character_device_file/file_operation.png)
+
+- Struct cdev là một phần tử của struct inode.
+- Là struct đại điện cho character device.
+![alt text](/assets/BeagleBone/Character_device_file/struct_cdev.png)
+
+Để đọc ghi được vào device file thì phải đăng kí read/write, ...
+### Các bước để thêm file operation
+#### 1. Tạo protype cho các hàm
+```c
+#include <linux/cdev.h>     /* Define cdev_init(), cdev_add()*/
+static int      m_open(struct inode *inode, struct file *file);
+static int      m_release(struct inode *inode, struct file *file);
+static ssize_t  m_read(struct file *filp, char __user *user_buf, size_t size,loff_t * offset);
+static ssize_t  m_write(struct file *filp, const char *user_buf, size_t size, loff_t * offset);
+
+
+/* This function will be called when we open the Device file */
+static int m_open(struct inode *inode, struct file *file)
+{
+    pr_info("System call open() called...!!!\n");
+    return 0;
+}
+
+/* This function will be called when we close the Device file */
+static int m_release(struct inode *inode, struct file *file)
+{
+    pr_info("System call close() called...!!!\n");
+    return 0;
+}
+
+/* This function will be called when we read the Device file */
+static ssize_t m_read(struct file *filp, char __user *user_buf, size_t size, loff_t *offset)
+{
+    pr_info("System call read() called...!!!\n");
+    return 0;
+}
+
+/* This function will be called when we write the Device file */
+static ssize_t m_write(struct file *filp, const char __user *user_buf, size_t size, loff_t *offset)
+{
+    pr_info("System call write() called...!!!\n");
+    return size;
+}
+```
+#### 2. Tạo struct file operation
+```c
+static struct file_operations fops =
+{
+    .owner      = THIS_MODULE,
+    .read       = m_read,
+    .write      = m_write,
+    .open       = m_open,
+    .release    = m_release,
+};
+```
+Chỉ các tên field `.open`, `.read`, `.write`, `.release` là bắt buộc đúng—tên hàm thì tùy bạn.
+#### 3. Đăng ký thiết bị (register char device)
+```c
+/* 4.0 Creating cdev structure */
+cdev_init(&mdev.m_cdev, &fops);
+
+/* 4.1 Adding character device to the system */
+if ((cdev_add(&mdev.m_cdev, mdev.dev_num, 1)) < 0) {
+    pr_err("Cannot add the device to the system\n");
+    goto rm_device;
+}
+```
+#### 4. Gỡ đăng ký khi rmmod (module_exit)
+```c
+cdev_del(&mdev.m_cdev);
+```
+
+#### 5. Biên dịch và chạy
+![alt text](/assets/BeagleBone/Character_device_file/echo.png)
+Có thể thấy echo sẽ ghi vào thì nó gọi ra systemcall như `open`, `write`, `close`.
+![alt text](/assets/BeagleBone/Character_device_file/echo.png)
+Có thể thấy cat sẽ ghi vào thì nó gọi ra systemcall như `open`, `read`, `close`.
+
+### Write và Read đã đọc ghi được sao lại thêm ioctl
