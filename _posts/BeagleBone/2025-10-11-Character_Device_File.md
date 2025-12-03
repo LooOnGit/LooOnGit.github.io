@@ -20,7 +20,7 @@ Dùng `lsblk` để search ra.
 có 2 cột số là cặp số của **device number**.
 
 1. **Major number**: Là số xác định liên kết giữa driver và device. Một major number có thể được chia sẻ giữa nhiều device driver.
-2. **Minor number**: Là số dg để phân biệt các thiết bị vật lý riêng lẻ.
+2. **Minor number**: Là số để phân biệt các thiết bị vật lý riêng lẻ.
 
 ## Cấp phát tĩnh và cấp phát động cho device number
 Để cấp phat **device number** có 2 cách cấp phát tĩnh và cấp phát động.
