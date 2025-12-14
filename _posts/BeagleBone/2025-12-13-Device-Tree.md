@@ -703,7 +703,6 @@ del_timer_sync(&my_timer);  /* Wait for timer to finish */
 ### 🌐 Official Resources
 
 - 📘 [Device Tree Specification](https://www.devicetree.org/specifications/) - Chuẩn chính thức
-- 📗 [Linux Kernel Device Tree](https://www.kernel.org/doc/html/latest/devicetree/index.html) - Documentation trong kernel
 - 📙 [BeagleBone Device Tree Guide](https://elinux.org/Beagleboard:BeagleBoneBlack_Debian#Loading_custom_capes) - Hướng dẫn specific cho BBB
 
 ### 🎓 Learning Resources
