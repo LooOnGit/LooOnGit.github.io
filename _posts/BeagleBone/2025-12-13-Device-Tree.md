@@ -56,7 +56,7 @@ Device Tree sử dụng kiến trúc cây với:
 
 ## 🔄 Quy Trình Build Device Tree
 
-![Quy trình build Device Tree](/assets/BeagleBone/Device-Tree/image.png)
+![Quy trình build Device Tree](/assets/Yocto/Device_tree/image.png)
 
 ### 📝 1. Device Tree Source (`.dts`)
 
