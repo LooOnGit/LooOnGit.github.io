@@ -103,3 +103,34 @@ Quá trình **relocation** rất quan trọng:
 > - Entry point của chương trình
 > - Các section như `.text`, `.data`, `.bss`, etc.
 
+## GNU tools
+
+### arm-none-eabi-gcc
+- **arm**: target architecture
+- **none**: chỉ hệ điều hành mà trình biên dịch hướng tới. Ở đây, none chỉ là thiết kế cho môi trường bare-metal, tức là chương trình chạy trực tiếp trên phần cứng mà không có hệ điều hành bên dưới.
+- **eabi**: Embedded Application Binary Interface. EABI là một standard định nghĩa cho binary layout của hệ thống và user programs, library. Nó chắc chắn rằng trình biên dịch hoạt động trên bất kì bộ xử lý arm nào theo tiêu chuẩn EABI.
+-**gcc**: Viết tắt của GNU Compiler Collection.
+
+```bash
+arm-none-eabi-gcc -c main.c -o main.o
+```
+Trong đó:
+- `arm-none-eabi-gcc`: Command
+- `main.c`: source file
+- `-o`: compiler flag
+- `main.o`: output file
+
+### Some common compiler flags
+Có nhiều command:
+- `-c`: Flag này sử dụng để compile và assemble nhưng không link. Khi chạy run flag này nó xử lý tới assembly stage nhưng stop trước khi linking.
+- `-o` file: Chỉ định output file.
+- `-g`: Tạo debug information trong file thực thi. 
+- `-Wall`: Cho phép tất cả các warning message, xác định issue trong code.
+- `-Werror`: Xem xét tất cả warning và error, đảm bảo chất lượng code và ổn định.
+- `-I` [DIR]: Bao gồm một thư mục để tìm kiếm các header file, thường cho tổ chức project lớn.
+- `ansi` and `-std=STANDARD`: tùy chọn flag của trình biên dịch dùng để chỉ định phiên bản (chuẩn) của ngôn ngữ C.
+- `-v`: flag này cho trình biên dịch hiển thị thông tin chi tiết về quá trình biên dịch.
+
+![Process Stage](/assets/Bare_Metal_STM32/GNU/image1.png)
+![Process Stage](/assets/Bare_Metal_STM32/GNU/image2.png)
+
