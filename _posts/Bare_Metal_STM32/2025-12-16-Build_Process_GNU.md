@@ -134,3 +134,22 @@ Có nhiều command:
 ![Process Stage](/assets/Bare_Metal_STM32/GNU/image1.png)
 ![Process Stage](/assets/Bare_Metal_STM32/GNU/image2.png)
 
+### Some architecture-specific flags
+- `-mcpu=[NAME]`: Chỉ định CPU target trong quá trình biên dịch.
+- `-march=[NAME]`: Chỉ định kiến trúc ARM, nó config cho trình biên dịch biết kiến trúc ARM nào để biên dịch.
+- `mtune=[NAME]`: Tương tự `mcpu`, nhưng nó chỉ tối ưu hóa cho CPU nhất định.
+- `thumb`: Cấu hình compiler để tạo ra code theo tập lệnh Thumb, nó là compressed(nén) version của ARM instruction set. Để tăng code density và nâng cao hiệu quả sử dụng bộ nhớ.
+- `marm`: Hướng dẫn cho compiler tạo ra code theo tập lệnh ARM.
+- `mlittle-endian/-mbig-endian`: Chỉ định endianness tạo ra code. Little-endian là hầu như là format chung của ARM. 
+![Process Stage](/assets/Bare_Metal_STM32/Flash/image4.png)
+
+### Other Commands in the GNU Toolchain for Arm
+- `arm-none-eabi-nm`: Liệt kê các symbol trong file object.Trong ngữ cảnh các chương trình khác nhau, chẳng hạn như tên hàm, tên biến và các hằng số. 
+- `arm-none-eabi-size`: Cung cấp lượng thông tin chi tiết về dung lượng bộ nhớ mà các phần khác của chương trình chiếm dụng.
+- `arm-none-eabi-objdump`: Công cụ này được sử dụng để trích xuất và hiển thị thông tin chi tiết từ các file object. Nó cung cấp cái nhìn sâu về các lệnh máy, khiến nó trở thành một công cụ rất quan trọng cho việc phân tích kỹ lưỡng các file object. Các chức năng của nó bao gồm: disassemble (dịch ngược) mã máy, hiển thị header của các section và trình bày bảng symbol. Công cụ này đặc biệt hữu ích khi chúng ta cần đi sâu vào chi tiết của mã đã biên dịch, giúp làm rõ cấu trúc, nội dung và cơ chế hoạt động của file, từ đó hỗ trợ hiệu quả cho việc debug và tối ưu code.
+- `arm-none-eabi-readelf`: Tool này cung cấp thông tin chi tiết về file ELF, bao gồm header, program header và symbol table. Nó tiện ích khi làm việc với ELF.
+- `arm-none-eabi-objcopy`: Sử dụng để convert object file từ 1 format sang format khác, thường là convert từ file object sang file binary.
+![Process Stage](/assets/Bare_Metal_STM32/GNU/image3.png)
+
+
+
