@@ -103,9 +103,9 @@ Quá trình **relocation** rất quan trọng:
 > - Entry point của chương trình
 > - Các section như `.text`, `.data`, `.bss`, etc.
 
-## GNU tools
+## 🔧 GNU Tools
 
-### arm-none-eabi-gcc
+### 💻 arm-none-eabi-gcc
 - **arm**: target architecture
 - **none**: chỉ hệ điều hành mà trình biên dịch hướng tới. Ở đây, none chỉ là thiết kế cho môi trường bare-metal, tức là chương trình chạy trực tiếp trên phần cứng mà không có hệ điều hành bên dưới.
 - **eabi**: Embedded Application Binary Interface. EABI là một standard định nghĩa cho binary layout của hệ thống và user programs, library. Nó chắc chắn rằng trình biên dịch hoạt động trên bất kì bộ xử lý arm nào theo tiêu chuẩn EABI.
@@ -120,7 +120,7 @@ Trong đó:
 - `-o`: compiler flag
 - `main.o`: output file
 
-### Some common compiler flags
+### 🚩 Some Common Compiler Flags
 Có nhiều command:
 - `-c`: Flag này sử dụng để compile và assemble nhưng không link. Khi chạy run flag này nó xử lý tới assembly stage nhưng stop trước khi linking.
 - `-o` file: Chỉ định output file.
@@ -134,7 +134,7 @@ Có nhiều command:
 ![Process Stage](/assets/Bare_Metal_STM32/GNU/image1.png)
 ![Process Stage](/assets/Bare_Metal_STM32/GNU/image2.png)
 
-### Some architecture-specific flags
+### ⚙️ Some Architecture-Specific Flags
 - `-mcpu=[NAME]`: Chỉ định CPU target trong quá trình biên dịch.
 - `-march=[NAME]`: Chỉ định kiến trúc ARM, nó config cho trình biên dịch biết kiến trúc ARM nào để biên dịch.
 - `mtune=[NAME]`: Tương tự `mcpu`, nhưng nó chỉ tối ưu hóa cho CPU nhất định.
@@ -143,7 +143,7 @@ Có nhiều command:
 - `mlittle-endian/-mbig-endian`: Chỉ định endianness tạo ra code. Little-endian là hầu như là format chung của ARM. 
 ![Process Stage](/assets/Bare_Metal_STM32/Flash/image4.png)
 
-### Other Commands in the GNU Toolchain for Arm
+### 🛠️ Other Commands in the GNU Toolchain for Arm
 - `arm-none-eabi-nm`: Liệt kê các symbol trong file object.Trong ngữ cảnh các chương trình khác nhau, chẳng hạn như tên hàm, tên biến và các hằng số. 
 - `arm-none-eabi-size`: Cung cấp lượng thông tin chi tiết về dung lượng bộ nhớ mà các phần khác của chương trình chiếm dụng.
 - `arm-none-eabi-objdump`: Công cụ này được sử dụng để trích xuất và hiển thị thông tin chi tiết từ các file object. Nó cung cấp cái nhìn sâu về các lệnh máy, khiến nó trở thành một công cụ rất quan trọng cho việc phân tích kỹ lưỡng các file object. Các chức năng của nó bao gồm: disassemble (dịch ngược) mã máy, hiển thị header của các section và trình bày bảng symbol. Công cụ này đặc biệt hữu ích khi chúng ta cần đi sâu vào chi tiết của mã đã biên dịch, giúp làm rõ cấu trúc, nội dung và cơ chế hoạt động của file, từ đó hỗ trợ hiệu quả cho việc debug và tối ưu code.
