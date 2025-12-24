@@ -192,7 +192,7 @@ Trong ví dụ này, `PROVIDE` định nghĩa một symbol tên là `_stack_end`
 **5.AT Directive**
 
 
-Chỉ thị **AT** dùng để chỉ định LMA cho 1 section khi địa chỉ tải này khác địa chỉ thực thi VMA.
+Chỉ thị AT dùng để chỉ định địa chỉ tải (LMA – Load Memory Address) cho một section khi địa chỉ tải này khác với địa chỉ thực thi (VMA – Virtual Memory Address) của section đó. Chỉ thị này thường được sử dụng cho các section được nạp ở một vùng nhớ khác trong quá trình khởi tạo, sau đó được copy sang vị trí chạy thực tế khi chương trình bắt đầu thực thi.
 ```bash
 section AT> lma_region
 ```
