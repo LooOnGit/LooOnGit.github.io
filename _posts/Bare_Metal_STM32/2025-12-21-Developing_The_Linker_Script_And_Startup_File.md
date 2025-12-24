@@ -95,7 +95,7 @@ ENTRY (Reset_Handler)
 Trong cái ví dụ này thì `Reset_Handler` thì được thiết kế entry point (điểm khởi đầu) của chương trình.
 Quá trình phát triển firmware thì `Reset_Handler` chịu trách nhiệm khởi động hệ và chuyển sang chương trình chính `main`.
 
-##### The section directive (SECTIONS)
+#### The section directive (SECTIONS)
 Chỉ thị này ánh xạ và sắp xếp các section từ input file vào output file.
 
 **Usage example**
@@ -128,9 +128,82 @@ SECTIONS
 }
 ```
 Định nghĩa 1 file output có tên là `.text` và đặt địa chỉ bắt đầu của nó tại `0x08000000`. Tất cả các section có tên `.text` từ tất cả input được đưa vào `.text` output. 
+#### Other commonly used directives
+**1.The KEEP directive**
 
 
+Chỉ định **KEEP** đảm bảo rằng section hoặc symbol không bị linker loại bỏ trong quá trình tối ưu, thậm chí có vẻ như không được sử dụng. Điều này đặt biệt quan trọng đối với bảng vector (vector table) và hàm khởi tạo.  Vì những thành phần này bắt buộc phải tồn tại trong file nhị phân cuối cùng.
+```bash
+KEEP(section)
+```
+Ví dụ:
+```bash
+KEEP(*(.isr_vector))
+``` 
 
+
+**2.The >region directive**
+
+
+Chỉ định **>region** dùng để yêu cầu đặt một section cụ thể vào một vùng nhớ xác định. Các vùng nhớ có thể được khai báo trước trong khối chỉ thị MEMORY của linker script.
+```bash
+section >region
+```
+**Ví dụ**:
+```bash
+.data :
+{
+  *(.data)
+} > RAM
+```
+Trong ví dụ này đặt `.data` vào trong SRAM memory.
+
+
+**3.The ALIGN directive**
+
+
+Chỉ định ALIGN đóng vai trò quan trọng trong linker script, dùng để điều chỉnh location counter sao cho nó được align theo biên bộ nhớ xác định. 
+
+**Location counter** là một built-in variable, địa chỉ hiện tại trong bộ nhớ nơi linker đang đặt các section hoặc các phần của file output trong quá trình linking. Trong linker script, nó được ký hiệu bằng dấu chấm **(.)**.
+```bash
+. = ALIGN(expression);
+```
+**Ví dụ:**
+```bash
+. = ALIGN(4);
+```
+Trong ví dụ này, địa chỉ hiện tại sẽ được căn chỉnh theo biên 4 byte. `.` là địa chỉ hiện tại mà linker đang đặt dữ liệu code. ALIGN(4) đảm bảo nó sẽ luôn nhảy địa chỉ theo bội số của 4 byte.
+
+
+**4.The PROVIDE directive**
+
+
+Chỉ định **PROVIDE** cho phép define symbols để linker sẽ inclue trong file output. Nếu không define thì nó sẽ sử dụng mặc định cho symbols các giá trị này có thể ghi đè (override) bởi những module khác nếu cần.
+```bash
+PROVIDE (symbol = expression)
+```
+**Ví dụ**:
+```bash
+PROVIDE(_stack_end = ORIGIN(RAM) + LENGTH(RAM))
+```
+Trong ví dụ này, `PROVIDE` định nghĩa một symbol tên là `_stack_end` và gán giá trị là `ORIGIN(RAM) + LENGTH(RAM)`, tức là giá trị của `_stack_end` sẽ là địa chỉ bắt đầu của SRAM + kích thước của SRAM.
+
+
+**5.AT Directive**
+
+
+Chỉ thị **AT** dùng để chỉ định LMA cho 1 section khi địa chỉ tải này khác địa chỉ thực thi VMA.
+```bash
+section AT> lma_region
+```
+**Ví dụ**:
+```bash
+.data : AT> FLASH
+{
+  *(.data)
+} >RAM
+```
+## Understanding constants in linker scripts
 
 ## Writing the linker script and startup file
 
