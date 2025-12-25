@@ -41,10 +41,14 @@ Khai báo biến:
 int counter = 10;
 ```
 Biến counter nằm trong section .data.
+
+
 | Giai đoạn             | Bộ nhớ | Địa chỉ                |
 | --------------------- | ------ | ---------------------- |
 | Khi nạp firmware      | Flash  | `0x08004000` (**LMA**) |
 | Khi chương trình chạy | SRAM   | `0x20000000` (**VMA**) |
+
+
 Tại sao 0x08004000 bởi vì có nhiều section khác nhau mỗi section đều chứa ở vùng địa chỉ mà section `.data` nằm ở vùng địa chỉ `0x08004000`.
 
 
@@ -204,6 +208,32 @@ section AT> lma_region
 } >RAM
 ```
 ## Understanding constants in linker scripts
+Khi viết linker script, ta thường phải sử dụng tiền tố và hậu tố. Nó rất quan trong trong xác định memory address và size của vùng nhớ.
 
+
+![Prefix and suffix](/assets/Bare_Metal_STM32/Linker_Script/image2.png)
+
+
+### Linker script symbols
+Linker symbols, hay còn gọi đơn giản là symbols, là những thành phần nền tảng trong quá trình chuyển đổi mã nguồn thành chương trình có thể thực thi.
+
+
+Symbols bao gồm 2 thành phần: name và value. Các symbol này được gán giá trị số nguyên, đại diện cho địa chỉ bộ nhớ nơi các biến, hàm, hoặc các thành phần khác của chương trình được lưu trữ trong bộ nhớ của vi điều khiển.
+
+Trong ngữ cảnh của linker symbols, giá trị được gán cho một symbol đại diện cho địa chỉ bộ nhớ nơi biến hoặc hàm tương ứng được lưu trữ.
+
+
+![Linker script symbols](/assets/Bare_Metal_STM32/Linker_Script/image3.png)
+
+
+Toán tử giống như toán tử trong C. Toán tử bao gồm `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `|=`, `^=`, `<<=`, `>>=`.
+
+
+![Operations](/assets/Bare_Metal_STM32/Linker_Script/image4.png)
+
+
+Khi sourc main.c được processing thì nó sẽ tạo ra file symbol table.
+
+![Operations](/assets/Bare_Metal_STM32/Linker_Script/image5.png)
 ## Writing the linker script and startup file
 
