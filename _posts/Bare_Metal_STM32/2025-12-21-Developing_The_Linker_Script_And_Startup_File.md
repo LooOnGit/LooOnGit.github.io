@@ -236,4 +236,282 @@ Khi sourc main.c được processing thì nó sẽ tạo ra file symbol table.
 
 ![Operations](/assets/Bare_Metal_STM32/Linker_Script/image5.png)
 ## Writing the linker script and startup file
+Dưới đây là một chương trình tôi đã giải thích theo mấy lệnh comment.
+```c
+/*Specifying the firmware's entry point*/
+ENTRY(Reset_Handler)
 
+/*Detailing the available memory*/
+MEMORY
+{
+    FLASH(rx):ORIGIN = 0x08000000, LENGTH = 512KB
+    SRAM(rwx):ORIGIN = 0x20000000, LENGHT = 128K
+}
+
+_estack = ORIGIN(SRAM) + LENGHT(SRAM);
+
+/*Specifying the necessary heap and stack sizes*/
+__max_heap_size = 0x200;
+__max_heap_size = 0x400;
+
+/*Define output sections*/
+SECTIONS
+{
+    .text :
+    {
+        . = ALIGN(4);
+        *(.isr_vector_tbl)  /*merge all .isr_vector_tbl section of input files*/
+        *(.text)            /*merge all .text section of input files*/
+        *(.rodata)          /*merge all .rodata section of input files*/
+        . = ALIGN(4);
+        _etext = .;         /*create a global symbol to hold end of text section*/
+    }> FLASH
+    .data :
+    {
+        . = ALIGN(4);
+        _sdata = .;         /*Create a global symbol to hold start of data section*/
+        *(.data)
+        . = ALIGN(4);
+        _edata = .;         /*Create a global symbol to hold end of data section*/
+    } > SRAM AT> FLASH /*>(vma) AT> (lma)*/
+    .bss :
+    {
+        . = ALIGN(4);
+        _sbss = .;
+        *(.bss)
+        . = ALIGN(4);
+        _ebss = .;
+    }> SRAM
+}
+```
+### Writing the startup file
+Nhiệm vụ của startup file bao gồm:
+- **Implementing the vector table**: Defining the vector table để map interrupts to their handlers, đảm bảo hệ thông có thể phản hồi hiệu quả trước các sự kiện khác nhau.
+- **Creating interrupt handlers**: Mỗi interrupt listed trong **vector table**, một interrupt handler sẽ được thực thi define respond sự kiện tương ứng.
+- **Establishing the firmware's entry point**: Đề cập đến `Reset_Handler`, như được chỉ định trong linker script. Hàm này đóng vai trò là entry point của chương trình, nó thực thi sau khi **reset** và chịu trách nhiệm thiết lập enviroment cho chương trình chính.
+- **Transferring the .data section**: Liên quan đến việc copy `.data` section từ **FLASH** sang **SRAM**.
+- **Zeroing the .bss section**: Khởi tạo `.bss` section về giá trị 0, đảm bảo rằng các các variable global và static đều bắt đầu với một trạng thái xác định.
+
+### Writing the startup file 
+```c
+extern uint32_t _estack;
+extern uint32_t _etext;
+extern uint32_t _edata;
+extern uint32_t _sdata;
+extern uint32_t _sbss;
+extern uint32_t _ebss;
+
+void Reset_Handler(void);
+int main(void);
+void NMI_Handeler(void)__attribute__((weak, alias("Default_Handler")));
+void HardFault_Handler(void)__attribute__((weak, alias("Default_Handler")));
+void MemManage_Handler(void)__attribute__((weak, alias("Default_Handler")));
+
+uint32_t vector_tbl[] __attribute__((section(".isr_vector"))) = {
+    (uint32_t)&_estack,
+    (uint32_t)&Reset_Handler,
+    (uint32_t)&NMI_Handeler,
+    (uint32_t)&HardFault_Handler,
+    (uint32_t)&MemManage_Handler,
+    (uint32_t)&BusFault_Handler,
+    (uint32_t)&UsageFault_Handler,
+    0,
+    0,
+    0,
+    0,
+    (uint32_t)&SVC_Handler,
+    (uint32_t)&DebugMon_Handler,
+    0,
+    (uint32_t)&PendSV_Handler,
+    (uint32_t)&SysTick_Handler,
+    (uint32_t)&WWDG_IRQHandler,              			/* Window Watchdog interrupt                                          */
+    (uint32_t)&PVD_IRQHandler,               			/* EXTI Line 16 interrupt / PVD through EXTI                          */
+    (uint32_t)&TAMP_STAMP_IRQHandler,        			/* Tamper and TimeStamp interrupts through                            */
+    (uint32_t)&RTC_WKUP_IRQHandler,          			/* RTC Wakeup interrupt through the EXTI line                         */
+    (uint32_t)&FLASH_IRQHandler,             			/* FLASH global interrupt                                             */
+    (uint32_t)&RCC_IRQHandler,               			/* RCC global interrupt                                               */
+    (uint32_t)&EXTI0_IRQHandler,             			/* EXTI Line0 interrupt                                               */
+    (uint32_t)&EXTI1_IRQHandler,             			/* EXTI Line1 interrupt                                               */
+    (uint32_t)&EXTI2_IRQHandler,             			/* EXTI Line2 interrupt                                               */
+    (uint32_t)&EXTI3_IRQHandler,             			/* EXTI Line3 interrupt                                               */
+    (uint32_t)&EXTI4_IRQHandler,             			/* EXTI Line4 interrupt                                               */
+    (uint32_t)&DMA1_Stream0_IRQHandler,      			/* DMA1 Stream0 global interrupt                                      */
+    (uint32_t)&DMA1_Stream1_IRQHandler,      			/* DMA1 Stream1 global interrupt                                      */
+    (uint32_t)&DMA1_Stream2_IRQHandler,      			/* DMA1 Stream2 global interrupt                                      */
+    (uint32_t)&DMA1_Stream3_IRQHandler,      			/* DMA1 Stream3 global interrupt                                      */
+    (uint32_t)&DMA1_Stream4_IRQHandler,      			/* DMA1 Stream4 global interrupt                                      */
+    (uint32_t)&DMA1_Stream5_IRQHandler,      			/* DMA1 Stream5 global interrupt                                      */
+    (uint32_t)&DMA1_Stream6_IRQHandler,      			/* DMA1 Stream6 global interrupt                                      */
+    (uint32_t)&ADC_IRQHandler,               			/* ADC1 global interrupt                                              */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&EXTI9_5_IRQHandler,           			/* EXTI Line[9:5] interrupts                                          */
+    (uint32_t)&TIM1_BRK_TIM9_IRQHandler,     			/* TIM1 Break interrupt and TIM9 global interrupt                     */
+    (uint32_t)&TIM1_UP_TIM10_IRQHandler,     			/* TIM1 Update interrupt and TIM10 global interrupt                   */
+    (uint32_t)&TIM1_TRG_COM_TIM11_IRQHandler,			/* TIM1 Trigger and Commutation interrupts and TIM11 global interrupt */
+    (uint32_t)&TIM1_CC_IRQHandler,           			/* TIM1 Capture Compare interrupt                                     */
+    (uint32_t)&TIM2_IRQHandler,              			/* TIM2 global interrupt                                              */
+    (uint32_t)&TIM3_IRQHandler,              			/* TIM3 global interrupt                                              */
+    (uint32_t)&TIM4_IRQHandler,              			/* TIM4 global interrupt                                              */
+    (uint32_t)&I2C1_EV_IRQHandler,           			/* I2C1 event interrupt                                               */
+    (uint32_t)&I2C1_ER_IRQHandler,           			/* I2C1 error interrupt                                               */
+    (uint32_t)&I2C2_EV_IRQHandler,           			/* I2C2 event interrupt                                               */
+    (uint32_t)&I2C2_ER_IRQHandler,           			/* I2C2 error interrupt                                               */
+    (uint32_t)&SPI1_IRQHandler,              			/* SPI1 global interrupt                                              */
+    (uint32_t)&SPI2_IRQHandler,              			/* SPI2 global interrupt                                              */
+    (uint32_t)&USART1_IRQHandler,            			/* USART1 global interrupt                                            */
+    (uint32_t)&USART2_IRQHandler,            			/* USART2 global interrupt                                            */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&EXTI15_10_IRQHandler,         			/* EXTI Line[15:10] interrupts                                        */
+    (uint32_t)&RTC_Alarm_IRQHandler,         			/* RTC Alarms (A and B) through EXTI line interrupt                   */
+    (uint32_t)&OTG_FS_WKUP_IRQHandler,       			/* USB On-The-Go FS Wakeup through EXTI line interrupt                */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&DMA1_Stream7_IRQHandler,      			/* DMA1 Stream7 global interrupt                                      */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&SDIO_IRQHandler,              			/* SDIO global interrupt                                              */
+    (uint32_t)&TIM5_IRQHandler,              			/* TIM5 global interrupt                                              */
+    (uint32_t)&SPI3_IRQHandler,              			/* SPI3 global interrupt                                              */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&DMA2_Stream0_IRQHandler,      			/* DMA2 Stream0 global interrupt                                      */
+    (uint32_t)&DMA2_Stream1_IRQHandler,      			/* DMA2 Stream1 global interrupt                                      */
+    (uint32_t)&DMA2_Stream2_IRQHandler,      			/* DMA2 Stream2 global interrupt                                      */
+    (uint32_t)&DMA2_Stream3_IRQHandler,      			/* DMA2 Stream3 global interrupt                                      */
+    (uint32_t)&DMA2_Stream4_IRQHandler,      			/* DMA2 Stream4 global interrupt                                      */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&OTG_FS_IRQHandler,            			/* USB On The Go FS global interrupt                                  */
+    (uint32_t)&DMA2_Stream5_IRQHandler,      			/* DMA2 Stream5 global interrupt                                      */
+    (uint32_t)&DMA2_Stream6_IRQHandler,      			/* DMA2 Stream6 global interrupt                                      */
+    (uint32_t)&DMA2_Stream7_IRQHandler,      			/* DMA2 Stream7 global interrupt                                      */
+    (uint32_t)&USART6_IRQHandler,            			/* USART6 global interrupt                                            */
+    (uint32_t)&I2C3_EV_IRQHandler,           			/* I2C3 event interrupt                                               */
+    (uint32_t)&I2C3_ER_IRQHandler,           			/* I2C3 error interrupt                                               */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&FPU_IRQHandler,               			/* FPU global interrupt                                               */
+    0,                            			/* Reserved                                                           */
+    0,                            			/* Reserved                                                           */
+    (uint32_t)&SPI4_IRQHandler,              			/* SPI 4 global interrupt                                             */
+    (uint32_t)&SPI5_IRQHandler              			/* SPI 5 global interrupt */    
+};
+
+/* Default handler that enters an infinite loop */
+
+void Default_Handler(void)
+{
+	while(1)
+	{
+		
+	}
+}
+
+
+/* Reset Handler */
+void Reset_Handler(void)
+{
+	// Calculate the sizes of the .data and .bss sections
+	uint32_t data_mem_size =  (uint32_t)&_edata - (uint32_t)&_sdata;
+	uint32_t bss_mem_size  =   (uint32_t)&_ebss - (uint32_t)&_sbss;
+    
+	// Initialize pointers to the source and destination of the .data section
+	uint32_t *p_src_mem =  (uint32_t *)&_etext;
+	uint32_t *p_dest_mem = (uint32_t *)&_sdata;
+	
+	/*Copy .data section from FLASH to SRAM*/
+	for(uint32_t i = 0; i < data_mem_size; i++  )
+	{
+		
+		 *p_dest_mem++ = *p_src_mem++;
+	}
+	
+	// Initialize the .bss section to zero in SRAM
+	p_dest_mem =  (uint32_t *)&_sbss;
+	
+	for(uint32_t i = 0; i < bss_mem_size; i++)
+	{
+		 /*Set bss section to zero*/  
+		*p_dest_mem++ = 0;
+	}
+	
+	    // Call the application's main function.
+
+	main();
+}
+```
+#### External symbol declarations
+```c
+extern uint32_t _estack;
+extern uint32_t _etext;
+extern uint32_t _edata;
+extern uint32_t _sdata;
+extern uint32_t _sbss;
+extern uint32_t _ebss;
+```
+Những symbol này được khai báo ở linker script. Mỗi symbol là địa chỉ sử dụng trong startup process.
+- `_estack`: Địa chỉ top của stack. Giá trị này load vào main stack pointer register ngay từ sớm ở trong quá trình startup process.
+- `_etext`: Đánh dấu phần cuối của executable code section và bắt đầu của data section stored in flash memory.
+Chúng ta sử dụng nó như một mốc tham chiếu để sao chép dữ liệu đã được khởi tạo từ FLASH sang SRAM.
+- `_sdata` và `_edata`: Đại diện cho địa chỉ bắt đầu và kết thúc của initialized data section trong SRAM. Chúng được sử để determine size và đích đến cho data copy từ FLASH to RAM.
+- `_sbss` và `_ebss`: Đánh dấu bắt đầu và kết thúc của uninitialized data section trong SRAM. Chúng sử dụng những symbol để clear section, set nó thành 0.
+
+#### Function prototypes and attributes
+```c
+/* Function prototypes */
+void Reset_Handler(void);
+int main(void);
+
+/* Exception and Interrupt Handlers */
+void NMI_Handler					(void)__attribute__((weak,alias("Default_Handler")));
+void HardFault_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
+void MemManage_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
+void BusFault_Handler 				(void) __attribute__ ((weak, alias("Default_Handler")));
+void UsageFault_Handler 			(void) __attribute__ ((weak, alias("Default_Handler")));
+.....
+```
+`__attribute__ ((weak, alias("Default_Handler")))` thuộc tính này tạo ra handler **weak** và **alias** tới function có tên là `Default_Handler`. Nó cho phép overridden bởi những handler được define tường minh với tên ở những vị trí khác trong ứng dụng.
+
+- `__attribute__`: Nó thông báo cho compiler rằng khai báo mà nó được áp dụng cho function có những thuộc tính đặc biệt. Ảnh hưởng đến cách compiler xử lý function đó và trong một số trường hợp, lúc runtime. Các **attribute** có thể được sử dụng control optimization, generate code, aligment và liên quan đến discussion - đặc tính liên kết (`linkage characteristic`).
+- `weak`: Nó có nghĩa là không ngăn cản linker sử dụng một symbol khác cùng tên nhưng có liên kết mạnh hơn (stronger linkage). Chúng ta dùng `Default_Handler` và có thể overidden. Trong context của interrupt handler, việc đánh dấu chúng là weak cho phép chúng ta định nghĩa các `default handler` trong startup file, các handler đặc thù của ứng dụng có thể override không cần sửa thông qua startup file.
+- `alias("Default_Handler")`: Nó tạo ra một alias cho symbol khác, trong case này nó có tên là `Default_Handler`. Nó có nghĩa là symbol (e.g., NMI_Handler) không chỉ là weak, mà còn là một alias trỏ tới hàm `Default_Handler`. Do đó khi một ngắt xảy ra, và một handler cụ thể (chẳng hạn NMI_Handler) không được định nghĩa ở nơi khác trong ứng dụng với linkage (non-weak). Chương trình sẽ sử dụng `Default_Handler`thay thế. Cách làm này đảm bảo các ngắt đều có handler, tránh việc hện thống bị treo hoặc sập do các các sự kiện ngắt xảy ra mà không có handler để xử lý.
+
+#### Vector table definition
+```c
+/* Vector Table */
+uint32_t vector_tbl[] __attribute__((section(".isr_vector"))) = {
+    (uint32_t)&_estack,
+    (uint32_t)&Reset_Handler,
+    (uint32_t)&NMI_Handeler
+};
+```
+Mảng này khác báo interrupt vector table của Microcontroller, đặt ở `.isr_vector_tbl` section được khai báo trong linker script. 
+
+
+Set `&_estack` symbol như phần tử đầu tiên trong vector table để khai báo địa chỉ top của stack trong memory. Trong ARM Cortex-M microcontroller, first word (32bit) của vector table phải chứa initial value của **main stack pointer (MSP)**. Ngay khi reset xảy ra, xử lý load giá trị này vào MSP register để set up stack pointer chính xác trước khi thực thi bất kì code nào.
+
+
+Tiếp theo xác định address của `Reset_Handler`, sau đó chúng tôi xử lý list address cho NMI_Handler và các interrupt handlers tiếp theo. Có thể xem vector table trong RM của STM32F411, có những vùng địa chỉ được mô tả là `Reserved` những vùng đặt vậy đều có chủ đích, vector table được thế kế cho ARM Cortex-M thiết kế cho nhiều biến thể MCU khác ở đây mình dùng STM32F411 vì ở MCU này có nhiều interrupt không được hổ trợ trên MCU này nên để reserved. Điều này bắt chúng ta phải tuân theo không thể nào thay đổi vì đây là một architecture của MCU.
+
+
+![RM](/assets/Bare_Metal_STM32/Linker_Script/image6.png)
+
+
+`__attribute__((section(".isr_vector")))` cáu này để nói cho linker biết rằng phải đặt mảng `vector_tbl` vào trong section cụ thể được đầu ra có tên file là .isr_vector_tbl.
+ 
+#### Reset handler implementation
