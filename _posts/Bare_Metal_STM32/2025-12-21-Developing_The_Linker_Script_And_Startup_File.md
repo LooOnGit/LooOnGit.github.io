@@ -513,5 +513,87 @@ Tiếp theo xác định address của `Reset_Handler`, sau đó chúng tôi x�
 
 
 `__attribute__((section(".isr_vector")))` cáu này để nói cho linker biết rằng phải đặt mảng `vector_tbl` vào trong section cụ thể được đầu ra có tên file là .isr_vector_tbl.
- 
+#### Default dandler
+```c
+void Default_Handler(void)
+{
+    while(1);
+}
+```
+Function này đóng vai trò như một phương án dự phòng chung cho mọi yêu cầu ngắt mà chưa có trình xử lý cụ thể được cấu hình. Việc đi vào một infinite loop sẽ ngăn chặn chương trình thực thi vào trạng thái không được define sau sự kiện đó xảy ra.
+
 #### Reset handler implementation
+```c
+/* Reset Handler */
+void Reset_Handler(void)
+{
+	// Calculate the sizes of the .data and .bss sections
+	uint32_t data_mem_size =  (uint32_t)&_edata - (uint32_t)&_sdata;
+	uint32_t bss_mem_size  =   (uint32_t)&_ebss - (uint32_t)&_sbss;
+    
+	// Initialize pointers to the source and destination of the .data section
+	uint32_t *p_src_mem =  (uint32_t *)&_etext;
+	uint32_t *p_dest_mem = (uint32_t *)&_sdata;
+	
+	/*Copy .data section from FLASH to SRAM*/
+	for(uint32_t i = 0; i < data_mem_size; i++  )
+	{
+		
+		 *p_dest_mem++ = *p_src_mem++;
+	}
+	
+	// Initialize the .bss section to zero in SRAM
+	p_dest_mem =  (uint32_t *)&_sbss;
+	
+	for(uint32_t i = 0; i < bss_mem_size; i++)
+	{
+		 /*Set bss section to zero*/  
+		*p_dest_mem++ = 0;
+	}
+	
+	    // Call the application's main function.
+
+	main();
+}
+```
+Công việc của `Reset_Handler` là chuẩn bị hệ thống trước khi thực thi main.
+```c
+	uint32_t data_mem_size =  (uint32_t)&_edata - (uint32_t)&_sdata;
+	uint32_t bss_mem_size  =   (uint32_t)&_ebss - (uint32_t)&_sbss;
+```
+Đoạn chương trình này để tính ra size của `.data` và `.bss` section.
+- Với `.data` size này được dùng trong quá trình copy initialized data từ FLASH tới SRAM. 
+- Với `.bss` sử dụng size này để set giá trị zero trong `.bss` section trong SRAM.
+```c
+	// Initialize pointers to the source and destination of the .data section
+	uint32_t *p_src_mem =  (uint32_t *)&_etext;
+	uint32_t *p_dest_mem = (uint32_t *)&_sdata;
+```
+- Initialize a source pointer (p_src_mem) để trỏ tới nơi chứa dữ liệu được khởi tạo và lưu trong FLASH.
+- Initialize a destination pointer (p_dest_mem) để trỏ tới nơi start của `.data` section trong SRAM.
+```c
+	for(uint32_t i = 0; i < data_mem_size; i++  )
+	{
+		
+		 *p_dest_mem++ = *p_src_mem++;
+	}
+```
+Copy `.data` section từ FALSH đến SRAM từng word (32bit). Mỗi vòng lặp, để copy nội dùng mà **p_src_mem** trỏ tới được sao chép vào vị trí mà `p_dest_mem` trỏ tới. Sau đó cả 2 con trỏ được tăng lên đến word tiếp theo.
+
+```c
+p_dest_mem =  (uint32_t *)&_sbss;
+```
+Chúng cơ bản reset con trỏ (p_dest_mem) trỏ tới để bắng đầu `.bss` section in SRAM(_sbss), chuẩn bị cho việc gán tất cả giá trị bằng 0.
+
+```c
+	for(uint32_t i = 0; i < bss_mem_size; i++)
+	{
+		 /*Set bss section to zero*/  
+		*p_dest_mem++ = 0;
+	}
+```
+Set giá trị của `.bss` section trong SRAM(_sbss) bằng 0.
+
+
+Cuối cùng gọi đến hàm `main()`
+
