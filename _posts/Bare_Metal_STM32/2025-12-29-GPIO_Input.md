@@ -89,5 +89,17 @@ GPIOx_AFRH is also a 32-bit register, divided into eight 4-bit fields. Each 4-bi
 ## Developing input and output drivers
 
 ### The GPIO output driver using the BSRR
+- **Step1**: Set clock
+- **Step2**: Set Mode output 
+- **Step3**: Set/Reset register BSSR
+
+**Link code**: [BSSR GPIO](https://github.com/LooOnGit/Bare_Metal_STM/blob/406978499279e0f892d24866a4ba76f388e51e8e/Src/main.c)
+
 
 ### The GPIO input driver
+- **Step1**: Set clock
+- **Step2**: Set Mode input
+- **Step3**: Read register IDR
+
+**Link code**: [Read GPIO](https://github.com/LooOnGit/Bare_Metal_STM/blob/f8e3cd201d8e29d6b89bd87afbd1badd101e1322/Src/main.c)
+
