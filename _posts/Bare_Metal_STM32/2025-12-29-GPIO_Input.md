@@ -50,13 +50,13 @@ It is a 32-bit register divided into 16 pairs of bits. Each pair of bits corresp
 GPIOx_ODR is a 32-bit register, but only the lower 16 bits are used to control the output state of the pins.
 
 
-![GPIO data output register](/assets/Bare_Metal_STM32/GPIO/GPIO_output_data.png)
+![GPIO data output register](/assets/Bare_Metal_STM32/GPIO/GPIO_Output_data.png)
 
 
 GPIOx_IDR is used to read the current state of the GPIO pins configured as inputs. By reading from this register, we can determine whether each input is at a high or low logic level.
 
 
-![GPIO data input register](/assets/Bare_Metal_STM32/GPIO/GPIO_input_data.png)
+![GPIO data input register](/assets/Bare_Metal_STM32/GPIO/GPIO_Input_data.png)
 
 ### The GPIO bit set/reset register (GPIOx_BSRR)
 Controlling the state of GPIO pins. It provides atomic bitwise operations to set or reset individual bits, which ensures that no interrupt can disrupt the operation, maintaining data integrity during the modification.
