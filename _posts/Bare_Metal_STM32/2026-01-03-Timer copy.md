@@ -108,9 +108,10 @@ Update Event Frequency = (16MHz)/[(15999 + 1)*(499 + 1)] = 16MHz/8MHz = 2Hz
 ```
 Vậy thì UEV sẽ xảy ra với tần số 2Hz, tức là mỗi giây 2 lần.
 ## Developing the timer driver
-### Step1: Set timer clock prescaler
-### Step2: Set timer period
-### Step3: Enable timer
-### Step4: Disable timer
+- **Step1**: Enable the clock for TIMx
+- **Step2**: Sets prescaler value to divide the input clock to 10kHz.
+- **Step3**: Sets an auto-reaload value to make the timer count up to 10,000, creating a 1-second period.
+- **Step4**: Clears the timer counter.
+- **Step5**: Enable the timer.
 
 
