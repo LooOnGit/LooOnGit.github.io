@@ -1,5 +1,5 @@
 ---
-title: "Overview ethernet"
+title: "Overview Ethernet"
 date: 2026-01-22 05:38:00 +0700
 categories: [Ethernet]
 tags: [Ethernet][STM32][Networking]
@@ -60,5 +60,3 @@ MAC và PHY kết hợp với nhau tạo thành giao diện Ethernet hoàn chỉ
 
 
 - **Packet**: độ dài byte string có thể từ vài byte đến vài KB. Nó như là một đơn vị duy nhất giữa các thiết bị mạng.
-
-
