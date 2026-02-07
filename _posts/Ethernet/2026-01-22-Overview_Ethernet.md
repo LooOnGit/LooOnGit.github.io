@@ -2,7 +2,7 @@
 title: "Overview Ethernet"
 date: 2026-01-22 05:38:00 +0700
 categories: [Ethernet]
-tags: [Ethernet][STM32][Networking]
+tags: [Ethernet][STM32F7][Networking]
 ---
 
 # Overview Ethernet
