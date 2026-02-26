@@ -2,7 +2,7 @@
 title: "ETHERNET DEVELOPING"
 date: 2026-02-10 20:43:00 +0700
 categories: [ETHERNET]
-tags: [ETHERNET][STM32F7]
+tags: [ETHERNET]
 ---
 
 # ETHERNET DEVELOPING

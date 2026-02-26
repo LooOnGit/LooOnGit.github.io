@@ -2,7 +2,7 @@
 title: "ETHERNET MAC"
 date: 2026-01-26 19:53:00 +0700
 categories: [ETHERNET]
-tags: [ETHERNET][STM32F7]
+tags: [ETHERNET]
 ---
 
 # ETHERNET MAC
