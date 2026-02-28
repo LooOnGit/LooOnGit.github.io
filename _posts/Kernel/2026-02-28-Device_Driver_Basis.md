@@ -120,7 +120,38 @@ Có thể check xem module có được unload thành công hay không bằng co
 lsmod
 ```
 ## Driver Skeletons
+```c
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
+static int __init helloworld_init(void) {
+    pr_info("Hello world!\n");
+    return 0;
+}
+static void __exit helloworld_exit(void) {
+    pr_info("End of the world\n");
+}
+module_init(helloworld_init);
+module_exit(helloworld_exit);
+MODULE_AUTHOR("John Madieu <john.madieu@gmail.com>");
+MODULE_LICENSE("GPL");
+```
+### Module entry and exit points
+Tất cả các driver trong kernel đều có entry point và exit point.
+- Entry point được gọi khi module được load vào kernel (bằng `modprode` hoặc `insmod`).
+- Exit point được gọi khi module được unload khỏi kernel (bằng `rmmod` hoặc `modprobe -r`).
 
+
+So với c/c++ thì có `main()` function ở user space, còn trong kernel thì có `module_init()` và `module_exit()`. Những gì dev cần làm là cho kernel biết function nào là entry point và function nào là exit point. 
+
+
+**Example**: Với ví dụ trên chương trình trên helloworld driver, `helloworld_init()` là entry point và `helloworld_exit()` là exit point. Sử dụng module_init() và module_exit() macro để cho kernel biết function nào là entry point và function nào là exit point.
+```c
+module_init(helloworld_init);
+module_exit(helloworld_exit);
+```
+**Note**: Hàm init hoặc exit chỉ được chạy một lần, ngay sau khi module được nạp vào hoặc bị gỡ khỏi kernel.
+### Module information
 ## Errors and messages printing
 
 ## Module Parameters
