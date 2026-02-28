@@ -31,10 +31,33 @@ Một **module** giống như phần **plugin** của kernel. Nó được load 
 Trong **linux**, một module có thể cung cấp các function hoặc variable và export chúng bằng macro `EXPORT_SYMBOL`, chúng được gọi là symbols. Dependency của module B vào module A nghĩa là module B dùng symbols của module A.
 
 #### depmod utility
-**depmode** là một tool 
+**depmode** là một tool được run trong quá trình build kernel để tạo ra module dependency files. 
+- Nó hoạt động bằng cách đọc mỗi module trong `/lib/modules/<kernel-version>/` và tìm các symbols mà nó export. Result của process này được ghi vào `modules.dep` file và version binary của `modules.dep.bin`.
 
 ### Module Loading and Unloading
+Để module có thể hoạt động, cần load và kernel. 
+- `lsmod` : list all modules
+- `insmod` : insert module
+- `rmmod` : remove module
+- `modprobe` : command này thông minh hơn được ưu tiên sử dụng trong các hệ thống production.
+
 #### Manual loading
+Có 2 phương thức manual load:
+- `insmod` : đây là cách load module ở low-level.
+
+
+**Example**:
+```bash
+insmod /path/to/mydrv.ko
+```
+
+- `modprobe` : thường được các quản trị viên hệ thống (sysadmin) sử dụng hoặc trong môi trường production. modprobe là một lệnh thông minh vì nó phân tích file modules.dep để nạp các module phụ thuộc trước, rồi mới nạp module được yêu cầu. Nó tự động xử lý phụ thuộc giữa các module, giống như cách một trình quản lý gói (package manager) hoạt động:
+
+
+**Example**:
+```bash
+modprobe mydrv
+```
 #### Auto-loading
 #### Module unload
 
