@@ -58,9 +58,67 @@ insmod /path/to/mydrv.ko
 ```bash
 modprobe mydrv
 ```
-#### Auto-loading
-#### Module unload
 
+Nếu muốn module được load tự động khi boot, tạo file `/etc/modulesload.d/<filename>.conf` 
+```bash
+echo "mydrv" > /etc/modules-load.d/mydrv.conf
+```
+mỗi dòng 1 module. `<filename>` nên có ý nghĩa dễ hiểu đối với bạn. Thông thường người ta đặt tên là:
+```bash
+/etc/modules-load.d/modules.conf
+```
+
+#### Auto-loading
+`depmod` không chỉ build `modules.dep` mà còn build `modules.dep.bin` file làm nhiều việc hơn.
+- Khi một dev kernel viết driver, họ sẽ biết chính xác sẽ support hardware nào, vì vậy họ chịu trách nhiệm cung cấp các product và vendor ID cho tất cả thiết bị được support.
+- `depmod` cũng xử lý các file module để trích xuất và tổng hợp thông tin này, sau đó tạo ra file modules.alias, nằm tại:
+```bash
+/lib/modules/<kernel_release>/modules.alias
+```
+một `modules.alias` sẽ chứa các thông tin như sau:
+```bash
+alias usb:v0403pFF1Cd*dc*dsc*dp*ic*isc*ip*in* ftdi_sio
+alias usb:v0403pFF18d*dc*dsc*dp*ic*isc*ip*in* ftdi_sio
+alias usb:v0403pDAFFd*dc*dsc*dp*ic*isc*ip*in* ftdi_sio
+alias usb:v0403pDAFEd*dc*dsc*dp*ic*isc*ip*in* ftdi_sio
+alias usb:v0403pDAFDd*dc*dsc*dp*ic*isc*ip*in* ftdi_sio
+alias usb:v0403pDAFCd*dc*dsc*dp*ic*isc*ip*in* ftdi_sio
+alias usb:v0D8Cp0103d*dc*dsc*dp*ic*isc*ip*in* snd_usb_audio
+alias usb:v*p*d*dc*dsc*dp*ic01isc03ip*in* snd_usb_audio
+alias usb:v200Cp100Bd*dc*dsc*dp*ic*isc*ip*in* snd_usb_au
+```
+Ở user space cần hot-plug agent (or device manager), thường `udev` hoặc `mdev` để register với kernel thông báo khi có thiết bị mới được insert vào hệ thống.
+
+
+Khi đó kernel sẽ gửi device's descriptor (pid, vid, class, device class, device subclass, interface, và tất cả thông tin để nhận diện device) để hot-plug daemond, sau đó daemon sẽ gọi `modprobe` kèm thông tin đó. Tiếp theo `modprobe` sẽ parse `modules.alias` file để tìm module phù hợp và load vào kernel. Nếu module có phụ thuộc vào module khác, `modprobe` sẽ load module phụ thuộc trước.
+
+
+#### Module unload
+Thường sử dụng command `rmmod` để unload module. Nên sử dụng unload cho một module được load bằng `ismod` command. 
+
+
+- Module unload là một feature để enable/disable module khi cần thiết, theo `CONFIG_MODULE_UNLOAD` config option. 
+```bash
+CONFIG_MODULE_UNLOAD=y
+```
+
+Trong lúc runtime, kernel sẽ ngăn chặn bạn unload module có thể gây lỗi hệ thống. Bởi vì do kernel duy trì một reference count (số lần module được sử dụng), để biết liệu module có đang được sử dụng hay không. Nếu kernel tin rằng việc unload không an toàn để xóa một module, nó sẽ không cho phép bạn unload module đó. Tuy nhiên, bạn có thể thay đổi hành vi như sau:
+```bash
+MODULE_FORCE_UNLOAD=y
+```
+Option đầu tiên nên set trong kernel config để force unload một module:
+```bash
+rmmod -f mymodule
+```
+
+Mặt khác, một higher-level command để unload một module bằng cách thông minh hơn là `modprobe -r`.
+```bash
+modprobe -r mymodule
+```
+Có thể check xem module có được unload thành công hay không bằng command:
+```bash
+lsmod
+```
 ## Driver Skeletons
 
 ## Errors and messages printing
