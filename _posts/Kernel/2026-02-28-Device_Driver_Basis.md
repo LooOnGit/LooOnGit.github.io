@@ -151,6 +151,40 @@ module_init(helloworld_init);
 module_exit(helloworld_exit);
 ```
 **Note**: Hàm init hoặc exit chỉ được chạy một lần, ngay sau khi module được nạp vào hoặc bị gỡ khỏi kernel.
+#### `__init` and `__exit` attributes
+`__init` và `__exit` là kernel macros, được định nghĩa trong `include/linux/init.h`.
+```c
+#define __init __section(.init.text)
+#define __exit __section(.exit.text)
+```
+- `__init` yêu cầu **linker** đặt code vào section riêng biệt trong file object kernel. Section này được kernel giải phóng sau khi module được nạp và hàm init được thực thi. Điều này chỉ áp dụng cho các driver được biên dịch trực tiếp vào kernel (built-in drivers), không áp dụng cho các module có thể nạp động (loadable modules). Kernel sẽ chạy hàm init của driver lần đầu tiên trong quá trình khởi động (boot).
+- `__exit` tương tự code này bị loại khi module được compiled statically vào kernel hoặc khi module được unload khỏi kernel không được enable. Bởi cả 2 trường hợp đó hàm **exit** không bao giờ được gọi. `__exit` chỉ áp dụng cho các module có thể nạp động (loadable modules). 
+
+
+Tất cả attributes trên liên quan đến các file đối tượng có định dạng **Executable and Linkable Format (ELF)**. ELF là một định dạng file được sử dụng rộng rãi trong các hệ điều hành dựa trên Unix để lưu trữ các file thực thi, file object, thư viện chia sẻ và file core dump.
+
+
+Có thể run `objdump -h module.ko` để in ra các section khác nhau để tạo thành module.ko kernel module.
+
+![ELF file](/assets/Kernel/Device_Driver_Basis/ELF.png)
+
+
+Chỉ có một vài section trong hình minh họa là các section chuẩn của ELF:
+- `.text`: chứa code thực thi của chương trình.
+- `.data`: chứa các biến toàn cục được khởi tạo.
+- `.bss`: chứa các biến toàn cục không được khởi tạo.
+- `.rodata`: chứa các hằng số (read-only data).
+- `.comment`: chứa thông tin comment.  
+
+Các section khác được thêm vào theo nhu cầu riêng của kernel. 
+- `.modinfo`: chứa thông tin về module.
+- `.init.text`: chứa code thực thi của hàm init.
+- `.exit.text`: chứa code thực thi của hàm exit.
+- `.modsym`: chứa thông tin về symbol.
+- `.modstr`: chứa thông tin về string.
+- `.modrel`: chứa thông tin về relocation.
+
+
 ### Module information
 ## Errors and messages printing
 
