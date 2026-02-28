@@ -1,6 +1,6 @@
 ---
 title: "Device Driver Basis"
-date: 2025-02-28 14:12:59 +0800
+date: 2026-02-28 14:12:59 +0800
 categories: [Kernel]
 tags: [Kernel]
 ---
@@ -22,6 +22,21 @@ Vùng bộ nhớ dành cho các chương trình người dùng. Bị giới hạ
 
 
 **Example**: `read`, `write`, `open`, `close` là các system call.
+
+### The concept of modules
+Một **module** giống như phần **plugin** của kernel. Nó được load vào kernel khi cần thiết và được unload khi không cần thiết. Thêm vào để thêm chức năng mới vào kernel khi hệ thống đang chạy, không cần restart máy.
+- Để support modules thì kernel phải được built với `CONFIG_MODULES=y`.
+
+### Module dependencies
+Trong **linux**, một module có thể cung cấp các function hoặc variable và export chúng bằng macro `EXPORT_SYMBOL`, chúng được gọi là symbols. Dependency của module B vào module A nghĩa là module B dùng symbols của module A.
+
+#### depmod utility
+**depmode** là một tool 
+
+### Module Loading and Unloading
+#### Manual loading
+#### Auto-loading
+#### Module unload
 
 ## Driver Skeletons
 
