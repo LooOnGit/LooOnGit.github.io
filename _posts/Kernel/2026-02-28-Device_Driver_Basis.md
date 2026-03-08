@@ -516,5 +516,118 @@ parm: myarr:this is my array of int (array of int)
 - Trong ngoặc là kiểu dữ liệu của tham số.
 
 ## Building your first module
+### The module's makefile
+**Makefile** là một file đặc biệt được dùng để thực hiện một tập hợp các hành động, trong đó hành động quan trọng nhất là biên dịch chương trình.
+
+
+Giới thiệu biến `obj-<X>` trong kbuild. Trong mỗi kernel makefile, có thể khai báo biến `obj-<X>` để chỉ ra các file nguồn cần biên dịch.
+```bash
+obj-<X>
+```
+**X** có thể là:
+- `y`: được sử dụng build thành 1 phần kernel.
+- `m`: được sử dụng và build thành module.
+- Để trống (left bank)
+- `n`: thì biến `obj-m` được sử dụng, và module sẽ không được build ở bất cứ đâu.
+
+
+Vì vậy, pattern `obj-${CONFIG_XXX}` thường được sử dụng, ở **CONFIG_XXX** là một kernel config option, set hoặc không trong suốt quá trình cấu hình kernel. Nó là `y` hay `m` tùy theo giá trị của kernel configuration (dùng lệnh `make menuconfig`)
+
+**Example**:
+```bash
+obj-$(CONFIG_MYMODULE) += foo.o
+```
+
+Trường hợp cuối cùng:
+```bash
+obj-<X> += somedir/
+```
+Có nghĩa là kbuild sẽ vào directory `somedir`, tìm kiếm bất cứ **makefile** trong đó, và xử lý để quyết định những object nào cần được build.
+
+Một đoạn nội dung ví dụ của **Makefile**:
+```bash
+obj-m := helloworld.o
+
+KERNELDIR ?= /lib/modules/$(shell uname -r)/build
+
+all default: modules
+install: modules_install
+
+modules modules_install help clean:
+$(MAKE) -C $(KERNELDIR) M=$(shell pwd) $@
+```
+- `obj-m := helloworld.o`: `obj-m` list modules muốn build. Mỗi `<filename>.o`, build system sẽ tìm kiếm `<filename>.c` để build. `obj-m` thì sử dụng build một module, trong đó khi `obj-y` sẽ tạo ra một object được tích hợp thẳng vào trong kernel (built-in).
+- `KERNELDIR ?= /lib/modules/$(shell uname -r)/build`: `KERNELDIR` là đường dẫn đến kernel source. `-C` yêu cầu công cụ make chuyển sang thư mục được chỉ định trước khi đọc các Makefile hoặc khi thực hiện các thao tác nào.
+- `M=$(shell pwd)`: Cái này có liên quan đến kernel build system. Kernel makefile sử dụng biến này để xác định thư mục chứa module để build như cắc file `.c`.
+- `all default: modules`:  dòng này yêu cầu `make` thực thi target `modules`, dù bạn gọi `all` hay `default`, vốn là những target phổ biến khi build các ứng dụng user space.
+- `modules modules_install help clean`: Dòng này sẽ đại diện cho list target hợp lệ trong makefile.
+- `$(MAKE) -C $(KERNELDIR) M=$(shell pwd) $@`: Rule này sẽ được thực thi cho mỗi target đã được liệt kê trước. `$@` sẽ được thay thế bằng tên của target đã kích hoạt rule này. Nói cách khác, nếu bạn gọi lệnh make modules, thì $@ sẽ được thay bằng modules, và rule sẽ trở thành:
+```bash
+$(MAKE) -C $(KERNELDIR) M=$(shell pwd) module
+```
+
+### In the kernel tree
+Trước khi build driver của mình trong **kernel tree**, cần xác định thực mục nào trong `drivers/` sẽ chứa 
+file `.c` của bạn. Giả sử bạn có file driver tên là `mychardev.c`, chứa mã nguồn của **character device driver**. Được đặt trong thư mục:
+```bash
+drivers/char
+```
+Mỗi thư mục trong `drivers/` đều có hai file quan trọng là `Makefile` và `Kconfig`. Thêm nội dung vào `Kconfig`:
+```bash
+config PACKT_MYCDEV
+    tristate "Our packtpub special Character driver"
+    default m
+    help
+      Say Y here if you want to support the /dev/mycdev device.
+      The /dev/mycdev device is used to access packtpub.
+```
+Trong makefile của cùng thư mực, hãy thêm dòng sau:
+```bash
+obj-$(CONFIG_PACKT_MYCDEV) += mychardev.o
+```
+Khi update **Makefile**, tên `.o` phải trùng với tên file `.c` của driver. Để driver được build dưới dạng module, hãy thêm dòng sau vào board deconfig của bạn trong thư mực:
+```bash
+CONFIG_PACKT_MYCDEV=m
+```
+Cũng có thể dùng `make menuconfig` để cấu hình lại kernel config. Để chọn driver từ giao diện cấu hình, sau đó chạy `make` để build driver. Và `make modules` để cài đặt module vào hệ thống.
+
+
+Những gì mô tả đó là những gì mà nhà sản xuất board embedded thực hiện để cung cấp Board Support Package (BSP) cho board của họ. BSP này đi kèm với một kernel đã được build sẵn các driver tùy chỉnh của họ.
+
+
+Sau khi đã cấu hình xong, bạn có thể build kernel bằng lệnh:
+```bash
+make
+```
+và build module bằng lệnh:
+```bash
+make modules
+```
+các module nằm trong kernel source tree sẽ được đặt vào thư mục.
+```bash
+/lib/modules/$(KERNELRELEASE)/kernel/
+```
+Trên hệ thông Linux thư mục này thường là:
+```bash
+/lib/modules/$(uname -r)/kernel/
+```
+Để install các module, chạy lệnh:
+```bash
+make modules_install
+```
+### Out of the kernel tree
+Trước khi bạn có thể build một module bên ngoài kernel tree, cần phải có kernel source tree đầy đủy và đã được compile. **Version** của kernel source tree phải trùng với kernel đang chạy trên hệ thống board. Có 2 cách để có được một kernel source tree đã build sẵn.
+#### 1. Tự build kernel
+#### 2.Cài đặt gói linux-headers-* từ repository của distribution
+```bash
+sudo apt-get update
+sudo apt-get install linux-headers-$(uname -r)
+```
+Lệnh này chỉ install các header file của kernel, không install toàn bộ kernel source tree.
+Các file header này sẽ được đặt vào thư mục:
+```bash
+/usr/src/linux-headers-$(uname -r)
+```
+
 
 
