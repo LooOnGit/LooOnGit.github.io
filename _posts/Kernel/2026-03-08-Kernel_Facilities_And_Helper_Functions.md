@@ -315,6 +315,10 @@ int wait_event_interruptible(wait_queue_head_t q, CONDITION);
 */
 void wake_up_interruptible(wait_queue_head_t *q);
 ```
+Hàm `wait_event_interruptible` không liên tục thăm dò (thực hiện vòng lặp kiểm tra liên tục/polling), mà chỉ đơn thuần đánh giá (kiểm tra) điều kiện khi được gọi. Nếu điều kiện trả về là false, tiến trình sẽ được được vào trạng thái `TASK_INTERRUPTIBLE` và rời khỏi run queue.
+- Điều kiện chỉ kiểm tra lại mỗi lần gọi `wake_up_interruptible` trong wait queue.
+- Điều kiện true khi `wake_up_interruptible` được chạy, một process in wait queue sẽ được đánh thức và set trạng thái `TASK_RUNNING`.
+- Muốn gọi tất cả các processes chờ trong queue, nên sử dựng `wake_up_interruptible_all`.
 ## Delay and timer management
 ### Standard timers
 ### High-resolution timers (HRTs)
