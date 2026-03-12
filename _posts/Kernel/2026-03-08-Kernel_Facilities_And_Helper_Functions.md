@@ -249,8 +249,72 @@ list_del(&redcar->list);
 ```
 **NOTE**: `list_del` disconnect `prev` và `next` pointer của mục nội dung (entry) được cung cấp, dẫn đến việc loại bỏ entry đó. Vung nhớ cấp phát cho node thì vẫn chưa được `free`,  bạn cần phải thực hiện điều đó một cách thủ công (bằng tay) bằng hàm `kfree`.
 ### Linked list traversal
+Dùng `list_for_each_entry(pos, head, member)` để duyệt qua list:
+- `head`: là những head của node.
+- `member`: là tên của `struct list_node` nằm bên trong data struct.
+- `pos` là sử dùng cho việc lặp lại (iteration). Nó hoạt động như một con trỏ (giống i trong `for(i=0; i<foo;i++)`). `head` có thể là head node của linked list, hoặc bất kỳ phần tử nào khác.
+```c
+struct car *acar; /*loop counter*/
+int blue_car_num = 0;
+
+/* 'list' iss the name of the list_head struct in our data structure */
+list_for_each_entry(acar, carlist, list){
+    if(acar->color == "blue")
+        blue_car_num++;
+}
+```
+`list_for_each_entry` được definition:
+```c
+#define list_for_each_entry(pos, head, member)
+for (pos = list_entry((head)->next, typeof(*pos), member); 
+    &pos->member != (head); 
+    pos = list_entry(pos->member.next, typeof(*pos), member))
+
+#define list_entry(ptr, type, member) container_of(ptr, type, member)
+```
+
 ## The kernel sleeping mechanism
+Sleep là mechanism mà qua đó process relaxes một processor (nhường lại bộ vi xử lý cho tiến trình khác). Lý do tại sao processor sleep có thể sensing data availability, hoặc waiting cho một resource được free.
+
+
+Kernel scheduler manager một list những task run, biết như là run queue. Sleep processes sẽ không được scheduleed, bởi vì nó xóa khỏi run queue, trừ khi nó được wakup.
 ### Wait queue
+Wait queues được sử dụng để xử lý block I/O, để chờ một số điều kiện cụ thể diễn ra để trở thành true, và nhận biết khi nào có dữ liệu hoặc resource availability. Để hiểu làm việc như nào xem trong `include/linux/wait.h`:
+```c
+struct __wait_queue {
+    unsigned int flags;
+#define WQ_FLAG_EXCLUSIVE 0x01
+    void *private;
+    wait_queue_func_t func;
+    struct list_head task_list;
+}; 
+```
+Mỗi process muốn đưa vào sleep thì đều phải queued trong list và được đưa vào sleep state cho đến khi có điều kiện true. Một số hàm sẽ luôn gặp phải khi làm việc với wait queue:
+- **Static declaration**:
+```c
+DECLARE_WAIT_QUEUE_HEAD(name)
+```
+- **Dyanmic delaration**:
+```c
+wait_queue_head_t my_wait_queue;
+init_waitqueue_head(&my_wait_queue);
+```
+- **Blocking**:
+```c
+/*
+* block the current task (process) in the wait queue if
+* CONDITION is false
+*/
+int wait_event_interruptible(wait_queue_head_t q, CONDITION);
+```
+- **Unblocking**:
+```c
+/*
+* wake up one process sleeping in the wait queue if
+* CONDITION above has become true
+*/
+void wake_up_interruptible(wait_queue_head_t *q);
+```
 ## Delay and timer management
 ### Standard timers
 ### High-resolution timers (HRTs)
