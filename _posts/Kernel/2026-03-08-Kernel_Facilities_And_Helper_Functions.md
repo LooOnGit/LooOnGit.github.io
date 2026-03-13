@@ -319,7 +319,63 @@ Hàm `wait_event_interruptible` không liên tục thăm dò (thực hiện vòn
 - Điều kiện chỉ kiểm tra lại mỗi lần gọi `wake_up_interruptible` trong wait queue.
 - Điều kiện true khi `wake_up_interruptible` được chạy, một process in wait queue sẽ được đánh thức và set trạng thái `TASK_RUNNING`.
 - Muốn gọi tất cả các processes chờ trong queue, nên sử dựng `wake_up_interruptible_all`.
+
+
+
+**Example**:
+```c
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/time.h>
+#include <linux/delay.h>
+#include <linux/workqueue.h>
+
+static DECLARE_WAIT_QUEUE_HEAD(my_wq);
+static int condition = 0;
+
+/*declare a work queue*/
+static struct work_struct wrk;
+
+static void work_handler(struct work_struct *work)
+{
+    printk("Waitqueue module handler %s\n", __FUNCTION__);
+    msleep(5000);
+    printk("Wake up the sleeping module\n");
+    condition = 1;
+    wake_up_interruptible(&my_wq);
+}
+
+static int __init my_init(void)
+{
+    printk("Wait queue example\n");
+
+    INIT_WORK(&wrk, work_handler);
+    wait_event_interruptible(my_wq, condition != 0);
+
+    pr_info("woken up by the work job\n");
+    return 0;
+}
+
+void my_exit(void)
+{
+    printk("Wait queue example cleanup\n");
+}
+
+module_init(my_init);
+module_exit(my_exit);
+MODULE_AUTHOR("John Madieu <john.madieu@foobar.com>");
+MODULE_LICENSE("GPL");
+```
+Khi `insmod` sẽ được vào sleep trong wait queue khoảng 5 giây, và sau đó được wake up bằng work handler. Dsmeg để xem kết quả:
+
+
+![User space and kernel space](/assets/Kernel/Kernel_Facilities_and_Helper_Functions/example1.png)
 ## Delay and timer management
+Time được sử dụng nhiều nhất, chỉ đứng sau bộ nhớ. Nó được dùng để làm hầu hết mọi thức, sleep, scheduling, timout và nhiều tác vụ khác.
+
+
+Có 2 loại timer. Kernel sử dụng thời gian tuyệt đối (absolute time) để biết mấy giờ, nghĩa là ngày và giờ hiện tại. Trong khi đó, thời gian tương đối (relative time), là một hardware chip gọi (RTC). Mặt khác, để xử lý thời gian tương đối, kernel dựa vào một tính năng của CPU (ngoại vi) được gọi là bội định thời (timer), mà theo quan điểm của kernel, được gọi là kernel timer. Kernel timer chính là nội dung mà chúng ta sẽ thảo luận trong phần này.
 ### Standard timers
 ### High-resolution timers (HRTs)
 ### Dynamic tick/tickless kernel
