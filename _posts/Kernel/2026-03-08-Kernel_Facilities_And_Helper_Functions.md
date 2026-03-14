@@ -486,6 +486,68 @@ MODULE_DESCRIPTION("Standard timer example");
 MODULE_LICENSE("GPL");
 ```
 ### High-resolution timers (HRTs)
+Standart timer có độ chính xác thấp và không phụ hợp ứng dụng. HRT được giới thiệu trong kernel v2.6.16( và enable bằng cách CONFIG_HIGH_RES_TIMERS option trong kernel configuration) có độ phân giải ở mức microsecond (up to nanosecond, pơhuj thuốc vào platform), so sánh với millisecond của standard timer.
+
+
+Standard timer phụ thuộc vào HZ (vì chúng dựa trên jiffies), trong khi HRT được implement dựa trên `ktime`. Kernel và hardware phải support HRT trước khi sử dụng. Nói các khác phải có phần mã phụ thuốc kiến trúc (architecture-dependent) được triển khai để cho phép hardware HRTs.
+#### HRT API
+Yêu cầu header:
+```c
+#include <linux/hrtimer.h>
+```
+HRT được đại diện trong kernel thể hiện như `hrtimer`:
+```c
+struct hrtimer {
+    struct timerqueue_node node;
+    ktime_t _softexpires;
+    enum hrtimer_restart (*function)(struct hrtimer *);
+    struct hrtimer_clock_base *base;
+    u8 state;
+    u8 is_rel;
+};
+```
+##### HRT setup initialization
+HRT setup initialization được thực hiện như sau:
+
+
+**1. Initialize the hrtimer**: Trước khi hrtimer initialization, cần setup a timer, nó đại diện cho thời gian.
+```c
+void hrtimer_init(struct hrtimer *timer, clockid_t which_clock, enum hrtimer_mode mode);
+```
+**2. Starting hrtimer**: hrtimer có thể được bắt đầu như ví dụ sau:
+```c
+int hrtimer_start(struct hrtimer *timer, ktime_t time, const enum hrtimer_mode mode);
+```
+`mode` đại diện cho expiry mode. Nó phải là `HRTIMER_MODE_ADS` cho một thời gian tuyệt đối, hoặc `HRTIME_MODE_REL` nếu sử dụng daiga strij thời gian tương đối so với thời điểm hiện tại. 
+**3. hrtime cancellation**: Có thể hủy timer hoặc xem là có thể hủy hay không:
+```c
+int hrtimer_cancel(struct hrtimer *timer);
+int hrtimer_try_to_cancel(struct hrtimer *timer);
+```
+Cả 2 đều return 0 khi timer không active và 1 khi timer active. Khác biết giữa 2 function này là `hrtimer_try_to_cancel` fails nếu timer active hoặc callback của nó đang run, return -1, trong khi `hrtimer_cancel` sẽ chơ cho đến khi callback hoàn thành.
+
+
+Có thể kiểm tra xem hrtimer callback vấn đang chạy theo như sau:
+```c
+int hrtimer_callback_running(struct hrtimer *timer);
+```
+Hãy nhớ rằng `hrtimer_try_to_cancel` gọi bên trong `hrtimer_callback_running`.
+
+
+**NOTE**: Để ngăn chặn timer tự động restart, hrtimer callback function phải return `HRTIMER_NORESTART`.
+
+
+Có thể kiểm tra xem liệu HRT có sẵn trong hệ thống mình làm không bằng cách:
+- Kiếm kernel config file, file này nên chưa dòng tương tự `CONFIG_HIGH_RES_TIMERS=y`
+```bash
+zcat /proc/configs.gz | grep CONFIG_HIGH_RES_TIMERS
+```
+- Tìm kiếm bằng cách `cat /proc/timer_list` hoặc `cat /proc/timer_list | grep resolution`. `.resolution` phải hiển thị 1 nsecs và event_handler phải show `hrtimer_interrupt`.
+- Bằng cách sử dụng system call `clock_getres`.
+- Từ bên trong kernel code, bằng cách sử dụng `#ifdef CONFIG_HIGH_RES_TIMERS`.
+
+
+Với HRTs enabled trên hệ thống, độ chính xác của sleep và timer system calls khong phụ thuộc vào **jiffies** nữa, thay vào đó chúng sẽ có độ chính xác tương đương với HRT. Đây cũng là lý do vì sao một số hệ thống không hỗ trợ `nanosleep()`.
 ### Dynamic tick/tickless kernel
 ### Delays and sleep in the kernel
 ## Kernel locking mechanism
