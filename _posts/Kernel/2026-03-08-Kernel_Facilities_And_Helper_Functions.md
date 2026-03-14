@@ -395,9 +395,96 @@ extern u64 jiffies_64;
 ``` 
 Bằng cách này, hệ thống 32-bit system jiffies sẽ point vào 32-bit thấp, và `jiffies_64` sẽ point bao gồm cả bit cao. Trên 64-bit platform, `jiffies` và `jiffies_64`.
 #### The timer API
-
-##### Timer setup
+Một **timer** được đại điện trong kernel dưới dạng `struct timer_list` được define trong `<linux/timer.h>`:
+```c
+struct timer_list {
+    struct list_head entry;
+    unsigned long expires;
+    struct tvec_t_base_s *base;
+    void (*function)(unsigned long);
+    unsigned long data;
+};
+```
+`expires` là giá trị tuyệt đối tình bằng jiffies. `entry` là một danh sách liên kết đôi, và `data` là thành phần không bắt buộc và được truyền vào hàm callback.
+##### Timer setup initialization
+**1. Setting up the timer**: Set up the timer, cung cấp user-define callback and data:
+```c
+void setup_timer(struct timer_list *timer, void (*function)(unsigned long), unsigned long data);
+```
+Có thể sử dụng như sau:
+```c
+void init_timer(struct timer_list *timer);
+```
+`setup_timer` là một wrapper của `init_timer`. 
+**2. Setting the expiration time**: Khi timer được khai báo, cần set expiration trước khi callback dược gọi:
+```c
+int mod_timer(struct timer_list *timer, unsigned long expires);
+```
+**3. Releasing the timer**: Khi không còn dùng timer, cần được giải phóng:
+```c
+void del_timer(struct timer_list *timer);
+int del_timer_sync(struct timer_list *timer);
+```
+`del_timer` trả về **void**, bất kể nó có deactived một pending timer (bộ định thời) hay không. Nó return value là 0 nếu timer không hoặc động, hoặc 1 đang active. Cuối cùng, `del_timer_sync`, chờ cho đến khi xử lý xong, ngay cả khi xảy ra trên CPU khác. Không nên giữ lock chặn quá trình xử lý, nếu không sẽ đẫn đến tình trạng khóa chết (deadlock). Nên giải phóng timer trong **module cleanup routine** (hàm dọn dẹp). Có thể kiểm tra độc lập liệu có chạy hay không:
+```c
+int timer_pending(const struct timer_list *timer);
+```
+Hàm check liệu có bất kì hàm callback của timer đã được kích hoạt.
 ##### Standard timer example
+```c
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/timer.h>
+
+static struct timer_list my_timer;
+
+void my_timer_callback(unsigned long data)
+{
+    printk("%s called (%ld).\n", __FUNCTION__, jiffies);
+}
+
+static int __init my_init(void)
+{
+    int retval;
+
+    printk("Timer module loaded\n");
+
+    /* Initialize the timer structure */
+    setup_timer(&my_timer, my_timer_callback, 0);
+
+    printk("Setup timer to fire in 300ms (%ld)\n", jiffies);
+
+    /* Activate/Modify the timer to expire after 300ms */
+    retval = mod_timer(&my_timer, jiffies + msecs_to_jiffies(300));
+
+    if (retval)
+        printk("Timer firing failed\n");
+
+    return 0;
+}
+
+static void my_exit(void)
+{
+    int retval;
+
+    /* Deactivate the timer */
+    retval = del_timer(&my_timer);
+
+    /* Check if the timer was still pending when deleted */
+    if (retval)
+        printk("The timer is still in use...\n");
+
+    pr_info("Timer module unloaded\n");
+}
+
+module_init(my_init);
+module_exit(my_exit);
+
+MODULE_AUTHOR("John Madieu <john.madieu@gmail.com>");
+MODULE_DESCRIPTION("Standard timer example");
+MODULE_LICENSE("GPL");
+```
 ### High-resolution timers (HRTs)
 ### Dynamic tick/tickless kernel
 ### Delays and sleep in the kernel
