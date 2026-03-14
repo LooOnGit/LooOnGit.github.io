@@ -376,7 +376,28 @@ Time được sử dụng nhiều nhất, chỉ đứng sau bộ nhớ. Nó đư
 
 
 Có 2 loại timer. Kernel sử dụng thời gian tuyệt đối (absolute time) để biết mấy giờ, nghĩa là ngày và giờ hiện tại. Trong khi đó, thời gian tương đối (relative time), là một hardware chip gọi (RTC). Mặt khác, để xử lý thời gian tương đối, kernel dựa vào một tính năng của CPU (ngoại vi) được gọi là bội định thời (timer), mà theo quan điểm của kernel, được gọi là kernel timer. Kernel timer chính là nội dung mà chúng ta sẽ thảo luận trong phần này.
+
+Kernel timers có 2 loại khác nhau:
+- Standard timers hoặc system timers.
+- High-resolution timers.
 ### Standard timers
+Standard timer là kernel timer operating dựa trên bộ phân giải (granularity) của jiffies (nhịp của hệ thống).
+#### Jiffies and Hz
+Một jiffy là kernel unit được declared trong `include/linux/jiffies.h`. Hiểu về **jiffies** cần biết về **Hz** nó là số lần **jiffies** được tăng lên trong 1 giây. Mỗi lần tăng như vậy gọi là **tick**. Hz được đại diện cho size của **jiffy**. **Hz** phụ thuộc vào hardware và kernel version, cũng xác định tần suất clock interrupt xuất hiện. Chỉ số này được config trên một số archtectures, đã được cố định trên các kiến trúc. 
+
+
+**Jiffies** sẽ được tăng lên **Hz** lần trong 1 giây. Nếu **Hz** = 1000, thì nó được tăng lên 1000 lần (tức là cứ mỗi 1/1000 giây lại có một tick). Sau khi được xác định, **programmable interrupt timer (PIT)**, nó là một linh kiện hardware, đã được lập trình với giá trị đã được lập trình để tăng **jiffies** mỗi khi ngắt PIT xảy ra.
+
+
+Tùy vào platform, jiffies có thể dẫn đến overflow. Trên hệ thống 32-bit, Hz = 1000 sẽ duy trì được 50 ngày, trong khi con số này lên đến 600 million years trên hệ thống 64-bit. Được lưu trữ jiffies bằng biến 64-bit, vấn đề được giải quyết. Một biến thứ 2 được giới thiệu được define trong `<linux/jiffies.h>`:
+```c
+extern u64 jiffies_64;
+``` 
+Bằng cách này, hệ thống 32-bit system jiffies sẽ point vào 32-bit thấp, và `jiffies_64` sẽ point bao gồm cả bit cao. Trên 64-bit platform, `jiffies` và `jiffies_64`.
+#### The timer API
+
+##### Timer setup
+##### Standard timer example
 ### High-resolution timers (HRTs)
 ### Dynamic tick/tickless kernel
 ### Delays and sleep in the kernel
