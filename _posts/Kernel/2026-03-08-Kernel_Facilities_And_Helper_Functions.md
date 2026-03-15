@@ -486,7 +486,7 @@ MODULE_DESCRIPTION("Standard timer example");
 MODULE_LICENSE("GPL");
 ```
 ### High-resolution timers (HRTs)
-Standart timer có độ chính xác thấp và không phụ hợp ứng dụng. HRT được giới thiệu trong kernel v2.6.16( và enable bằng cách CONFIG_HIGH_RES_TIMERS option trong kernel configuration) có độ phân giải ở mức microsecond (up to nanosecond, pơhuj thuốc vào platform), so sánh với millisecond của standard timer.
+Standart timer có độ chính xác thấp và không phụ hợp ứng dụng. HRT được giới thiệu trong kernel v2.6.16( và enable bằng cách CONFIG_HIGH_RES_TIMERS option trong kernel configuration) có độ phân giải ở mức microsecond (up to nanosecond, phụ thuộc vào platform), so sánh với millisecond của standard timer.
 
 
 Standard timer phụ thuộc vào HZ (vì chúng dựa trên jiffies), trong khi HRT được implement dựa trên `ktime`. Kernel và hardware phải support HRT trước khi sử dụng. Nói các khác phải có phần mã phụ thuốc kiến trúc (architecture-dependent) được triển khai để cho phép hardware HRTs.
@@ -549,7 +549,35 @@ zcat /proc/configs.gz | grep CONFIG_HIGH_RES_TIMERS
 
 Với HRTs enabled trên hệ thống, độ chính xác của sleep và timer system calls khong phụ thuộc vào **jiffies** nữa, thay vào đó chúng sẽ có độ chính xác tương đương với HRT. Đây cũng là lý do vì sao một số hệ thống không hỗ trợ `nanosleep()`.
 ### Dynamic tick/tickless kernel
+Với option Hz trước đây, kernel sẽ luôn interrupt mỗi giây để schedule task, thậm chí system đang trong trạng thái idle. Nếu Hz set 1000 sẽ có 1000 interrupt mỗi giây, điều này ngay ngăn cản CPU idle trong thời gian dài, làm ảnh hưởng tiêu thụ điện năng của CPU.
+
+
+Thử xem kernel no fixed hoặc được xác định trước, ở trong đó các tick bị disable cho đến khi có tác vụ nào đó thực thi. Các hệ thống như vậy gọi là **tickless kernel**. Thực tế việc kích hoạt tick được schedule dựa vào action tiếp theo. Tên chính xác hơn là **dynamic tick kernel**. Kernel chịu trách nhiệm cho task schedule và duy trì list những task sẵn sàng chạy. Khi không có task để schedule, scheduler switch tới idle thread, nó enable dynamic tick bằng cách disabling periodic tick cho đến khi hoàn tất timer.
+
+
+Ở hệ thống nền tảng, kernel cũng duy trì danh sách những task thời gian chờ (timeout) (biết khi nào phải sleep và sleep trong bao lâu). Trong idle state, nếu tick tiếp theo xa hơn so với thời gian chơ ngắn (lowest timeout), kernel sẽ lập trình timer với timeout value. Khi timer expires, kernel re-enable periodic ticks và gọi scheduler, lúc này schedule gắp liên với timeout. Kernel tickless loại bỏ periodic ticks và tiết kiệm năng lượng khi idle.
 ### Delays and sleep in the kernel
+Có 2 loại delay:
+- **atomic**
+- **non-atomic**
+Khai báo header `#include <linux/delay.h>`
+#### Atomic context
+Các task atomic context (như ISR) không thể sleep, và không thể scheduled. Đó lả lý do tại sao busy-wait loop được sử dungj để tạo độ trễ trong atomic context. Kernel cung cấp `Xdelay` function sẽ tiêu tốn thời gian trong vòng lặp, đủ lâu (dựa vào biến `jiffies`) để đạt được độ trễ.
+```c
+ndelay(unsigned long nsecs);
+udelay(unsigned long usecs);
+mdelay(unsigned long msecs);
+```
+Nên ưu tiên dùng `udelay()` bởi vì `ndelay()` phụ thuộc vào độ chính xác của hardware timer và không phải tất cả các hệ thống đều hỗ trợ nó. Sử dụng `mdelay()` cũng không được khuyến khích.   
+
+
+Timer handlers (callbacks) thì đã thực thi trong atomic context, có nghĩa là sleep không được phép.
+#### Nonatomic context
+Trong non-atomic context, kernel cũng cấp hàm `sleep[_range]` và việc sử dụng hàm sẽ phụ thuộc vào việc cần tạo delay bao lâu:
+- `udelay` (unsigned lonng usecs): Dựa vào busy-wait loop. Nên sử dụng function này nếu cần sleep trong vài usecs (<~10us).
+- `usleep_range` (unsigned long min, unsigned long max): Dựa trên hrtimers, khuyến khích sleep một vài usecs hoặc small msecs (10us - 20ms), giúp tránh việc phải dùng vòng lặp busy-wait loop của `udelay()`.
+- `msleep` (unsigned long msecs): được hỗ trợ bởi jiffies/legacy_timer. Nên sử dụng cho thời gian lớn hơn, msecs sleep(10ms+).
+**NOTE**: sleep và delay là chủ đề được giải thích rõ ràng trong `Documentation/timers/timers-howto.txt` trong kernel source.
 ## Kernel locking mechanism
 ### Mutex
 ### Spinlock
