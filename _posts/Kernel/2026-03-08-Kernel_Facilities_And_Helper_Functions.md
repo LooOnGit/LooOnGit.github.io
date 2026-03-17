@@ -652,6 +652,43 @@ mutex_unlock(&my_mutex);
 ```
 Vui lòng tìm kiếm ở `include/linux/mutex.h` trong kernel source 
 ### Spinlock
+**1. Cơ chế hoạt động (Spinning vs sleeping)**
+- **Spinlock** sử dụng active-loop: Luồng sẽ spin (xoay vòng) liên túc để kiểm tra khóa cho đến khi lấy được thì thôi.
+- Khác với **mutex** (cho luồng sleep và nhường CPU), Spinlock chiếm giữ CPU hoàn toàn trong khi chờ.
+**2. Khi nào nên dùng?**
+- Chỉ dùng cho các tác vụ cực ngắn (vùng tranh chấp nhỏ).
+- Sử dụng khiL THời gian giữ khóa < Thời gian hệ điều hành cần để điều phối luồng  (reschedule/context switch).
+**3. Tương tác với hệ điều hành (Preemption)**
+- Khi một luồng giữ Spinlock, kernel sẽ vô hiệu hóa quyền ưu tiên (disable preemption).
+- **Mục đích:** Đảm bảo luồng đang giữ khóa không bị "đuổi" ra khỏi CPU, vì nếu nó bị tạm dừng, các luồng khác sẽ phải xoay vòng chờ đợi vô ích trong thời gian rất dài.
+**4. Trên hệ thống đơn nhân (Single Core)**
+- Sử dụng Spinlock trên máy single core là vô nghĩa và dễ gây deadlock (bế tắc) hoặc làm chậm hệ thống.
+- Trên single core, hàm `spin_lock()` thực tế chỉ còn nhiệm vụ là vô hiệu hóa quyền ưu tiên (preemption).
+
+
+Trong system **single core** nên dùng `spin_lock_irqsave()` và `spin_unlock_irqrestore()`, nó sẽ vô hiệu hóa interrupts trên CPU, giúp ngăn chặn tình trạng tranh chấp do interrupt gây ra (interrupt concurrency).
+
+
+Vì khi viết driver không biết sẽ chạy trên hệ thống nào nên dùng `spin_lock_irqsave(spinlock_t *lock,unsigned long flags)`, nó sẽ disable interrupt trên hệ thống trước khi lấy spinlock. Bên trong nó calls `local_irq_save(flags);`, hàm này phụ thuốc vào kiến trúc để lưu lại trạng thái của IRQ hiến tại, và sau đó là `preempt_disable()` để disable preeption trên CPU. Nên gọi `spin_unlock_irqrestore()` nó sẽ làm ngược với những bước trên.
+```c
+/* some where */
+spinlock_t my_spinlock;
+spin_lock_init(my_spinlock);
+
+static irqreturn_t my_irq_handler(int irq, void *data)
+{
+    unsigned long status, flags;
+    spin_lock_irqsave(&my_spinlock, flags);
+    status = access_shared_resources();
+    spin_unlock_irqrestore(&gpio->slock, flags);
+    return IRQ_HANDLED;
+}
+```
+#### Spinlock versus mutexes
+Tranh chấp (concurrency) trong kernel, **spinlock** và **mutex** cả 2 đều có mục tiêu riêng biệt:
+- **Mutex**: protect resource của process, spinlock protect những section quan trong IRQ handler.
+- **Mutex** sleep cho đến khi lấy được khóa, spinlock spin loop cho đến khi lấy được khóa.
+**NOTE**: Preemption sẽ bị disable đối với thread đang giữ spinlock.
 ## Work deferring mechanism
 ### Softirqs and ksoftirqd
 ### Tasklets
