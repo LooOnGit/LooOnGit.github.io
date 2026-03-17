@@ -319,6 +319,9 @@ Hàm `wait_event_interruptible` không liên tục thăm dò (thực hiện vòn
 - Điều kiện chỉ kiểm tra lại mỗi lần gọi `wake_up_interruptible` trong wait queue.
 - Điều kiện true khi `wake_up_interruptible` được chạy, một process in wait queue sẽ được đánh thức và set trạng thái `TASK_RUNNING`.
 - Muốn gọi tất cả các processes chờ trong queue, nên sử dựng `wake_up_interruptible_all`.
+
+
+**NOTE**: Thực tế main function `wait_event`, `wake_up`, `wake_up_all`. Chúng đước sử dụng với process trong queue ở trạng thái exclusive (uninterruptible) wait, bởi vì chúng không thế interrupt bằng signal. Chỉ nên sử dụng cho các task quan trọng. Các hàm có thể bị ngắt (interruptible functions) chỉ là tùy chọn (nhưng được khuyến khích sử dụng). Vì chúng có thể bị gián đoạn bởi các tín hiệu, bạn nên kiểm tra giá trị trả về của chúng. Một giá trị khác không (nonzero) có nghĩa là tiến trình đang ngủ của bạn đã bị ngắt bởi một loại tín hiệu nào đó, và khi đó driver nên trả về mã lỗi `ERESTARTSYS`.
 ## Delay and timer management
 ### Standard timers
 ### High-resolution timers (HRTs)
