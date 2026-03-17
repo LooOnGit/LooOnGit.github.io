@@ -322,13 +322,335 @@ Hàm `wait_event_interruptible` không liên tục thăm dò (thực hiện vòn
 
 
 **NOTE**: Thực tế main function `wait_event`, `wake_up`, `wake_up_all`. Chúng đước sử dụng với process trong queue ở trạng thái exclusive (uninterruptible) wait, bởi vì chúng không thế interrupt bằng signal. Chỉ nên sử dụng cho các task quan trọng. Các hàm có thể bị ngắt (interruptible functions) chỉ là tùy chọn (nhưng được khuyến khích sử dụng). Vì chúng có thể bị gián đoạn bởi các tín hiệu, bạn nên kiểm tra giá trị trả về của chúng. Một giá trị khác không (nonzero) có nghĩa là tiến trình đang ngủ của bạn đã bị ngắt bởi một loại tín hiệu nào đó, và khi đó driver nên trả về mã lỗi `ERESTARTSYS`.
+
+**Example**:
+```c
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/sched.h>
+#include <linux/time.h>
+#include <linux/delay.h>
+#include <linux/workqueue.h>
+
+static DECLARE_WAIT_QUEUE_HEAD(my_wq);
+static int condition = 0;
+
+/*declare a work queue*/
+static struct work_struct wrk;
+
+static void work_handler(struct work_struct *work)
+{
+    printk("Waitqueue module handler %s\n", __FUNCTION__);
+    msleep(5000);
+    printk("Wake up the sleeping module\n");
+    condition = 1;
+    wake_up_interruptible(&my_wq);
+}
+
+static int __init my_init(void)
+{
+    printk("Wait queue example\n");
+
+    INIT_WORK(&wrk, work_handler);
+    wait_event_interruptible(my_wq, condition != 0);
+
+    pr_info("woken up by the work job\n");
+    return 0;
+}
+
+void my_exit(void)
+{
+    printk("Wait queue example cleanup\n");
+}
+
+module_init(my_init);
+module_exit(my_exit);
+MODULE_AUTHOR("John Madieu <john.madieu@foobar.com>");
+MODULE_LICENSE("GPL");
+```
+Khi `insmod` sẽ được vào sleep trong wait queue khoảng 5 giây, và sau đó được wake up bằng work handler. Dsmeg để xem kết quả:
+
+
+![User space and kernel space](/assets/Kernel/Kernel_Facilities_and_Helper_Functions/example1.png)
 ## Delay and timer management
+Time được sử dụng nhiều nhất, chỉ đứng sau bộ nhớ. Nó được dùng để làm hầu hết mọi thức, sleep, scheduling, timout và nhiều tác vụ khác.
+
+
+Có 2 loại timer. Kernel sử dụng thời gian tuyệt đối (absolute time) để biết mấy giờ, nghĩa là ngày và giờ hiện tại. Trong khi đó, thời gian tương đối (relative time), là một hardware chip gọi (RTC). Mặt khác, để xử lý thời gian tương đối, kernel dựa vào một tính năng của CPU (ngoại vi) được gọi là bội định thời (timer), mà theo quan điểm của kernel, được gọi là kernel timer. Kernel timer chính là nội dung mà chúng ta sẽ thảo luận trong phần này.
+
+Kernel timers có 2 loại khác nhau:
+- Standard timers hoặc system timers.
+- High-resolution timers.
 ### Standard timers
+Standard timer là kernel timer operating dựa trên bộ phân giải (granularity) của jiffies (nhịp của hệ thống).
+#### Jiffies and Hz
+Một jiffy là kernel unit được declared trong `include/linux/jiffies.h`. Hiểu về **jiffies** cần biết về **Hz** nó là số lần **jiffies** được tăng lên trong 1 giây. Mỗi lần tăng như vậy gọi là **tick**. Hz được đại diện cho size của **jiffy**. **Hz** phụ thuộc vào hardware và kernel version, cũng xác định tần suất clock interrupt xuất hiện. Chỉ số này được config trên một số archtectures, đã được cố định trên các kiến trúc. 
+
+
+**Jiffies** sẽ được tăng lên **Hz** lần trong 1 giây. Nếu **Hz** = 1000, thì nó được tăng lên 1000 lần (tức là cứ mỗi 1/1000 giây lại có một tick). Sau khi được xác định, **programmable interrupt timer (PIT)**, nó là một linh kiện hardware, đã được lập trình với giá trị đã được lập trình để tăng **jiffies** mỗi khi ngắt PIT xảy ra.
+
+
+Tùy vào platform, jiffies có thể dẫn đến overflow. Trên hệ thống 32-bit, Hz = 1000 sẽ duy trì được 50 ngày, trong khi con số này lên đến 600 million years trên hệ thống 64-bit. Được lưu trữ jiffies bằng biến 64-bit, vấn đề được giải quyết. Một biến thứ 2 được giới thiệu được define trong `<linux/jiffies.h>`:
+```c
+extern u64 jiffies_64;
+``` 
+Bằng cách này, hệ thống 32-bit system jiffies sẽ point vào 32-bit thấp, và `jiffies_64` sẽ point bao gồm cả bit cao. Trên 64-bit platform, `jiffies` và `jiffies_64`.
+#### The timer API
+Một **timer** được đại điện trong kernel dưới dạng `struct timer_list` được define trong `<linux/timer.h>`:
+```c
+struct timer_list {
+    struct list_head entry;
+    unsigned long expires;
+    struct tvec_t_base_s *base;
+    void (*function)(unsigned long);
+    unsigned long data;
+};
+```
+`expires` là giá trị tuyệt đối tình bằng jiffies. `entry` là một danh sách liên kết đôi, và `data` là thành phần không bắt buộc và được truyền vào hàm callback.
+##### Timer setup initialization
+**1. Setting up the timer**: Set up the timer, cung cấp user-define callback and data:
+```c
+void setup_timer(struct timer_list *timer, void (*function)(unsigned long), unsigned long data);
+```
+Có thể sử dụng như sau:
+```c
+void init_timer(struct timer_list *timer);
+```
+`setup_timer` là một wrapper của `init_timer`. 
+**2. Setting the expiration time**: Khi timer được khai báo, cần set expiration trước khi callback dược gọi:
+```c
+int mod_timer(struct timer_list *timer, unsigned long expires);
+```
+**3. Releasing the timer**: Khi không còn dùng timer, cần được giải phóng:
+```c
+void del_timer(struct timer_list *timer);
+int del_timer_sync(struct timer_list *timer);
+```
+`del_timer` trả về **void**, bất kể nó có deactived một pending timer (bộ định thời) hay không. Nó return value là 0 nếu timer không hoặc động, hoặc 1 đang active. Cuối cùng, `del_timer_sync`, chờ cho đến khi xử lý xong, ngay cả khi xảy ra trên CPU khác. Không nên giữ lock chặn quá trình xử lý, nếu không sẽ đẫn đến tình trạng khóa chết (deadlock). Nên giải phóng timer trong **module cleanup routine** (hàm dọn dẹp). Có thể kiểm tra độc lập liệu có chạy hay không:
+```c
+int timer_pending(const struct timer_list *timer);
+```
+Hàm check liệu có bất kì hàm callback của timer đã được kích hoạt.
+##### Standard timer example
+```c
+#include <linux/init.h>
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/timer.h>
+
+static struct timer_list my_timer;
+
+void my_timer_callback(unsigned long data)
+{
+    printk("%s called (%ld).\n", __FUNCTION__, jiffies);
+}
+
+static int __init my_init(void)
+{
+    int retval;
+
+    printk("Timer module loaded\n");
+
+    /* Initialize the timer structure */
+    setup_timer(&my_timer, my_timer_callback, 0);
+
+    printk("Setup timer to fire in 300ms (%ld)\n", jiffies);
+
+    /* Activate/Modify the timer to expire after 300ms */
+    retval = mod_timer(&my_timer, jiffies + msecs_to_jiffies(300));
+
+    if (retval)
+        printk("Timer firing failed\n");
+
+    return 0;
+}
+
+static void my_exit(void)
+{
+    int retval;
+
+    /* Deactivate the timer */
+    retval = del_timer(&my_timer);
+
+    /* Check if the timer was still pending when deleted */
+    if (retval)
+        printk("The timer is still in use...\n");
+
+    pr_info("Timer module unloaded\n");
+}
+
+module_init(my_init);
+module_exit(my_exit);
+
+MODULE_AUTHOR("John Madieu <john.madieu@gmail.com>");
+MODULE_DESCRIPTION("Standard timer example");
+MODULE_LICENSE("GPL");
+```
 ### High-resolution timers (HRTs)
+Standart timer có độ chính xác thấp và không phụ hợp ứng dụng. HRT được giới thiệu trong kernel v2.6.16( và enable bằng cách CONFIG_HIGH_RES_TIMERS option trong kernel configuration) có độ phân giải ở mức microsecond (up to nanosecond, phụ thuộc vào platform), so sánh với millisecond của standard timer.
+
+
+Standard timer phụ thuộc vào HZ (vì chúng dựa trên jiffies), trong khi HRT được implement dựa trên `ktime`. Kernel và hardware phải support HRT trước khi sử dụng. Nói các khác phải có phần mã phụ thuốc kiến trúc (architecture-dependent) được triển khai để cho phép hardware HRTs.
+#### HRT API
+Yêu cầu header:
+```c
+#include <linux/hrtimer.h>
+```
+HRT được đại diện trong kernel thể hiện như `hrtimer`:
+```c
+struct hrtimer {
+    struct timerqueue_node node;
+    ktime_t _softexpires;
+    enum hrtimer_restart (*function)(struct hrtimer *);
+    struct hrtimer_clock_base *base;
+    u8 state;
+    u8 is_rel;
+};
+```
+##### HRT setup initialization
+HRT setup initialization được thực hiện như sau:
+
+
+**1. Initialize the hrtimer**: Trước khi hrtimer initialization, cần setup a timer, nó đại diện cho thời gian.
+```c
+void hrtimer_init(struct hrtimer *timer, clockid_t which_clock, enum hrtimer_mode mode);
+```
+**2. Starting hrtimer**: hrtimer có thể được bắt đầu như ví dụ sau:
+```c
+int hrtimer_start(struct hrtimer *timer, ktime_t time, const enum hrtimer_mode mode);
+```
+`mode` đại diện cho expiry mode. Nó phải là `HRTIMER_MODE_ADS` cho một thời gian tuyệt đối, hoặc `HRTIME_MODE_REL` nếu sử dụng daiga strij thời gian tương đối so với thời điểm hiện tại. 
+**3. hrtime cancellation**: Có thể hủy timer hoặc xem là có thể hủy hay không:
+```c
+int hrtimer_cancel(struct hrtimer *timer);
+int hrtimer_try_to_cancel(struct hrtimer *timer);
+```
+Cả 2 đều return 0 khi timer không active và 1 khi timer active. Khác biết giữa 2 function này là `hrtimer_try_to_cancel` fails nếu timer active hoặc callback của nó đang run, return -1, trong khi `hrtimer_cancel` sẽ chơ cho đến khi callback hoàn thành.
+
+
+Có thể kiểm tra xem hrtimer callback vấn đang chạy theo như sau:
+```c
+int hrtimer_callback_running(struct hrtimer *timer);
+```
+Hãy nhớ rằng `hrtimer_try_to_cancel` gọi bên trong `hrtimer_callback_running`.
+
+
+**NOTE**: Để ngăn chặn timer tự động restart, hrtimer callback function phải return `HRTIMER_NORESTART`.
+
+
+Có thể kiểm tra xem liệu HRT có sẵn trong hệ thống mình làm không bằng cách:
+- Kiếm kernel config file, file này nên chưa dòng tương tự `CONFIG_HIGH_RES_TIMERS=y`
+```bash
+zcat /proc/configs.gz | grep CONFIG_HIGH_RES_TIMERS
+```
+- Tìm kiếm bằng cách `cat /proc/timer_list` hoặc `cat /proc/timer_list | grep resolution`. `.resolution` phải hiển thị 1 nsecs và event_handler phải show `hrtimer_interrupt`.
+- Bằng cách sử dụng system call `clock_getres`.
+- Từ bên trong kernel code, bằng cách sử dụng `#ifdef CONFIG_HIGH_RES_TIMERS`.
+
+
+Với HRTs enabled trên hệ thống, độ chính xác của sleep và timer system calls khong phụ thuộc vào **jiffies** nữa, thay vào đó chúng sẽ có độ chính xác tương đương với HRT. Đây cũng là lý do vì sao một số hệ thống không hỗ trợ `nanosleep()`.
 ### Dynamic tick/tickless kernel
+Với option Hz trước đây, kernel sẽ luôn interrupt mỗi giây để schedule task, thậm chí system đang trong trạng thái idle. Nếu Hz set 1000 sẽ có 1000 interrupt mỗi giây, điều này ngay ngăn cản CPU idle trong thời gian dài, làm ảnh hưởng tiêu thụ điện năng của CPU.
+
+
+Thử xem kernel no fixed hoặc được xác định trước, ở trong đó các tick bị disable cho đến khi có tác vụ nào đó thực thi. Các hệ thống như vậy gọi là **tickless kernel**. Thực tế việc kích hoạt tick được schedule dựa vào action tiếp theo. Tên chính xác hơn là **dynamic tick kernel**. Kernel chịu trách nhiệm cho task schedule và duy trì list những task sẵn sàng chạy. Khi không có task để schedule, scheduler switch tới idle thread, nó enable dynamic tick bằng cách disabling periodic tick cho đến khi hoàn tất timer.
+
+
+Ở hệ thống nền tảng, kernel cũng duy trì danh sách những task thời gian chờ (timeout) (biết khi nào phải sleep và sleep trong bao lâu). Trong idle state, nếu tick tiếp theo xa hơn so với thời gian chờ ngắn (lowest timeout), kernel sẽ lập trình timer với timeout value. Khi timer expires, kernel re-enable periodic ticks và gọi scheduler, lúc này schedule gắn liên với timeout. Kernel tickless loại bỏ periodic ticks và tiết kiệm năng lượng khi idle.
 ### Delays and sleep in the kernel
+Có 2 loại delay:
+- **atomic**
+- **non-atomic**
+Khai báo header `#include <linux/delay.h>`
+#### Atomic context
+Các task atomic context (như ISR) không thể sleep, và không thể scheduled. Đó lả lý do tại sao busy-wait loop được sử dungj để tạo độ trễ trong atomic context. Kernel cung cấp `Xdelay` function sẽ tiêu tốn thời gian trong vòng lặp, đủ lâu (dựa vào biến `jiffies`) để đạt được độ trễ.
+```c
+ndelay(unsigned long nsecs);
+udelay(unsigned long usecs);
+mdelay(unsigned long msecs);
+```
+Nên ưu tiên dùng `udelay()` bởi vì `ndelay()` phụ thuộc vào độ chính xác của hardware timer và không phải tất cả các hệ thống đều hỗ trợ nó. Sử dụng `mdelay()` cũng không được khuyến khích.   
+
+
+Timer handlers (callbacks) thì đã thực thi trong atomic context, có nghĩa là sleep không được phép.
+#### Nonatomic context
+Trong non-atomic context, kernel cũng cấp hàm `sleep[_range]` và việc sử dụng hàm sẽ phụ thuộc vào việc cần tạo delay bao lâu:
+- `udelay` (unsigned lonng usecs): Dựa vào busy-wait loop. Nên sử dụng function này nếu cần sleep trong vài usecs (<~10us).
+- `usleep_range` (unsigned long min, unsigned long max): Dựa trên hrtimers, khuyến khích sleep một vài usecs hoặc small msecs (10us - 20ms), giúp tránh việc phải dùng vòng lặp busy-wait loop của `udelay()`.
+- `msleep` (unsigned long msecs): được hỗ trợ bởi jiffies/legacy_timer. Nên sử dụng cho thời gian lớn hơn, msecs sleep(10ms+).
+**NOTE**: sleep và delay là chủ đề được giải thích rõ ràng trong `Documentation/timers/timers-howto.txt` trong kernel source.
 ## Kernel locking mechanism
+Lock là cơ chế giúp chia sẽ tài nguyên giữa nhiều thread hoặc process khác nhau. Share resource là data hoặc một device có thể được hệ thống truy cập bởi ít nhất 2 user, dù có diễn ra cùng lúc hay không. Các cơ chế khóa giúp ngăn chặn truy cập xung đột/sai mục đích (abusive access).
+
+
+**Example**: Như khi có một process đang ghi dữ liệu trong khi một process khác đang đọc đúng vị trí đó, hoặc 2 tiến trình cùng tranh giành truy cập vào chung một thiết bị. Kernel cunng cấp nhiều cơ chế khóa khác nhau nhưng quan trọng là:
+- Mutex
+- Spinlock
+- Semaphore
 ### Mutex
+**Mutex** là viết tắt của **mutual exclusion**, là cơ chế khóa được dùng phổ biến nhất hiện nay. Để biết nó làm việc như thế nào xem ở `include/linux/mutex.h`:
+```c
+struct mutex {
+    /* 1: unlocked, 0: locked, negative: locked, possible waiters */
+    atomic_t count;
+    spinlock_t wait_lock;
+    struct list_head wait_list;
+};
+```
+Như đã thấy trong phần **wait queue**, cấu trúc này cũng chưa field thuộc kiểu dữ liệu list: `wait_list`. Nguyên lý sleep cũng tương tự.
+
+
+Các bên tranh khóa (Contenders) sẽ bị gỡ khỏi scheduler run queue và đẩy vào `wait_list` trong trạng thái sleep. Kernel sẽ lập lịch và thực thi task khác. Khi lock được release, một waiter trong wait queue sẽ được wake-up, đưa ra khỏi `wait_list` và được scheduled back.
+#### Mutex API
+Sử dụng một mutex chỉ yêu cầu một vài function cơ bản.
+##### Declare
+- Statically:
+```c
+DEFINE_MUTEX(my_mutex);
+```
+- Dynamically:
+```c
+struct mutex my_mutex;
+mutex_init(&my_mutex);
+```
+##### Accquire and release
+- Lock:
+```c
+void mutex_lock(struct mutex *lock);
+int mutex_lock_interruptible(struct mutex *lock);
+int mutex_lock_killable(struct mutex *lock);
+```
+- Unlock:
+```c
+void mutex_unlock(struct mutex *lock);
+```
+
+
+Thỉnh thoảng cần check liệu mutex đã lock hoặc không. Mục đích đó bạn có thể sử dụng hàm:
+```c
+int mutex_is_locked(struct mutex *lock);
+```
+Những gì hàm này làm là kiểm tra liệu mutex này có owner đang rỗng (NULL) hay không. Còn có hàm `mutex_trylock()`, hàm này sẽ lấy khóa mutex nếu nnos hiện chưa bị ai khóa và trả về 1; ngược lại thì nó sẽ trả về 0.
+```c
+int mutex_trylock(struct mutex *lock);
+```
+Hàm `mutex_lock_interruptible()` nó được khuyên dùng, sẽ giúp cho driver có khả năng interrupted bằng bất cứ signal. Trong khi đó, với hàm `mutex_lock_killable()`, chỉ những signal kill processs có thể interrupt driver.
+
+
+Nên cẩn thận `mutex_lock()`, và sử dụng nó khi có thể đảm bảo rằng mutex sẽ được release, dù cho bất cứ cái gì xảy ra. Trong user context, khuyên luoonn dùng `mutex_lock_interruptible()` để xin cấp khóa mutex, bởi vì hàm `mutex_lock()` sẽ không return nếu signal đã nhận được signal (thậm chí Ctrl + C).
+
+
+**Example**:
+```c
+struct mutex my_mutex;
+mutex_init(&my_mutex);
+
+/* inside a work or a thread */
+mutex_lock(&my_mutex);
+access_shared_memory();
+mutex_unlock(&my_mutex);
+```
+Vui lòng tìm kiếm ở `include/linux/mutex.h` trong kernel source 
 ### Spinlock
 ## Work deferring mechanism
 ### Softirqs and ksoftirqd
