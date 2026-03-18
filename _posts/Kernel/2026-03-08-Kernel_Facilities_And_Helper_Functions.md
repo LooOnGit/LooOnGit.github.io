@@ -690,6 +690,21 @@ Tranh chấp (concurrency) trong kernel, **spinlock** và **mutex** cả 2 đề
 - **Mutex** sleep cho đến khi lấy được khóa, spinlock spin loop cho đến khi lấy được khóa.
 **NOTE**: Preemption sẽ bị disable đối với thread đang giữ spinlock.
 ## Work deferring mechanism
+Defering (trì hoãn) là phương pháp giúp lập kế hoạch để một phần công việc được thực thi trong tương lai. Trì hoãn các hàm (bất kể loại nào) để gọi và thực thi chúng sau. Có 3 cách:
+- **SoftIRQs**: thực thi trong atomic context.
+- **Tasklets**: thực thi trong atomic context.
+- **Workqueues**: thực thi trong process context.
+
+### So sánh giữa Atomic Context và Process Context trong Linux Kernel
+
+| Đặc điểm | Atomic Context (Ngữ cảnh nguyên tử) | Process Context (Ngữ cảnh tiến trình) |
+| :--- | :--- | :--- |
+| **Đại diện** | Interrupts, SoftIRQs, Tasklets | Kernel threads, System calls, Workqueues |
+| **Khả năng ngủ (Sleep)** | **Tuyệt đối không** | **Có thể** |
+| **Khả năng bị lập lịch** | Không (Chạy liên tục cho đến khi xong) | Có (Có thể bị Scheduler tạm dừng) |
+| **Truy cập User Space** | Không thể | Có thể (Dùng `copy_to_user`, `copy_from_user`) |
+| **Cơ chế khóa (Locking)** | Spinlocks | Mutexes, Semaphores |
+| **Mức độ ưu tiên** | Rất cao (Đáp ứng phần cứng) | Thấp hơn (Xử lý tác vụ thông thường) |
 ### Softirqs and ksoftirqd
 ### Tasklets
 ### Tasklet scheduling
