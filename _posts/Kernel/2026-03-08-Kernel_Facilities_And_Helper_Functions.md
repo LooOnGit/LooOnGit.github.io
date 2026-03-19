@@ -706,6 +706,15 @@ Defering (trì hoãn) là phương pháp giúp lập kế hoạch để một ph
 | **Cơ chế khóa (Locking)** | Spinlocks | Mutexes, Semaphores |
 | **Mức độ ưu tiên** | Rất cao (Đáp ứng phần cứng) | Thấp hơn (Xử lý tác vụ thông thường) |
 ### Softirqs and ksoftirqd
+Một **software IRQ (softirq)** hoặc software interrupt là một cơ chế deferring chỉ sử dụng process rất nhanh., bởi vì nó run với disable scheduler (trong một interrupt context). Rất hiếm khi (hầu như không) muốn làm việc trực tiếp với softirq. Những tasklet thì thể hiện của softirq, và sẽ đáp ứng đủ yêu cầu trong gần như mọi trường hợp mà cần sử dụng tới softirq.
+#### ksoftirqd
+Trong hầu hết các case, các softirq được scheduled trong hardware interrupt, nó phải được diễn ra rất nhanh, nhanh hơn cả tốc độ mà heek thống có thể xử lý chúng kịp thời. Do đó, kernel sẽ đưa chúng vào queue để tiến hành xử lý sau. **Ksoftirqds** thì chịu trách nhiệm thực thi trễ (nó chạy trong process context). Một ksoftirqd là một kernel thread dành riêng cho mỗi CPU được huy động để xử lý các software interrupt chưa được phục vụ.
+
+
+![User space and kernel space](/assets/Kernel/Kernel_Facilities_and_Helper_Functions/example2.png)
+
+
+Tiền tố `top` ví dụ từ computer, có thể nhìn thấy các mục `ksoftirqd/n`, trong đó n là CPU number để `ksoftirqds` run. `ksoftirqd` tiêu thụ quá nhiều CPU có thể là dấu hiệu overload system hoặc hệ thống đang phải gánh chịu một **interrupt storm**, điều này không phải là dấu hiệu tốt. Có thể tham khảo tệp mã nguồn kernel/softirq.c để tìm hiểu về cách các ksoftirqd được thiết kế.
 ### Tasklets
 ### Tasklet scheduling
 ### Work queues
