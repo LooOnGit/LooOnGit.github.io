@@ -321,6 +321,7 @@ Hàm `wait_event_interruptible` không liên tục thăm dò (thực hiện vòn
 - Muốn gọi tất cả các processes chờ trong queue, nên sử dựng `wake_up_interruptible_all`.
 
 
+**NOTE**: Thực tế main function `wait_event`, `wake_up`, `wake_up_all`. Chúng đước sử dụng với process trong queue ở trạng thái exclusive (uninterruptible) wait, bởi vì chúng không thế interrupt bằng signal. Chỉ nên sử dụng cho các task quan trọng. Các hàm có thể bị ngắt (interruptible functions) chỉ là tùy chọn (nhưng được khuyến khích sử dụng). Vì chúng có thể bị gián đoạn bởi các tín hiệu, bạn nên kiểm tra giá trị trả về của chúng. Một giá trị khác không (nonzero) có nghĩa là tiến trình đang ngủ của bạn đã bị ngắt bởi một loại tín hiệu nào đó, và khi đó driver nên trả về mã lỗi `ERESTARTSYS`.
 
 **Example**:
 ```c
@@ -664,8 +665,75 @@ Giống **mutex**, **spinlock** cũng là cơ chế loại trừ lẫn nhau (mut
 - **unlocked** (released)
 
 
+**1. Cơ chế hoạt động (Spinning vs sleeping)**
+- **Spinlock** sử dụng active-loop: Luồng sẽ spin (xoay vòng) liên túc để kiểm tra khóa cho đến khi lấy được thì thôi.
+- Khác với **mutex** (cho luồng sleep và nhường CPU), Spinlock chiếm giữ CPU hoàn toàn trong khi chờ.
+
+
+**2. Khi nào nên dùng?**
+- Chỉ dùng cho các tác vụ cực ngắn (vùng tranh chấp nhỏ).
+- Sử dụng khiL THời gian giữ khóa < Thời gian hệ điều hành cần để điều phối luồng  (reschedule/context switch).
+
+
+**3. Tương tác với hệ điều hành (Preemption)**
+- Khi một luồng giữ Spinlock, kernel sẽ vô hiệu hóa quyền ưu tiên (disable preemption).
+- **Mục đích:** Đảm bảo luồng đang giữ khóa không bị "đuổi" ra khỏi CPU, vì nếu nó bị tạm dừng, các luồng khác sẽ phải xoay vòng chờ đợi vô ích trong thời gian rất dài.
+
+
+**4. Trên hệ thống đơn nhân (Single Core)**
+- Sử dụng Spinlock trên máy single core là vô nghĩa và dễ gây deadlock (bế tắc) hoặc làm chậm hệ thống.
+- Trên single core, hàm `spin_lock()` thực tế chỉ còn nhiệm vụ là vô hiệu hóa quyền ưu tiên (preemption).
+
+
+Trong system **single core** nên dùng `spin_lock_irqsave()` và `spin_unlock_irqrestore()`, nó sẽ vô hiệu hóa interrupts trên CPU, giúp ngăn chặn tình trạng tranh chấp do interrupt gây ra (interrupt concurrency).
+
+
+Vì khi viết driver không biết sẽ chạy trên hệ thống nào nên dùng `spin_lock_irqsave(spinlock_t *lock,unsigned long flags)`, nó sẽ disable interrupt trên hệ thống trước khi lấy spinlock. Bên trong nó calls `local_irq_save(flags);`, hàm này phụ thuốc vào kiến trúc để lưu lại trạng thái của IRQ hiến tại, và sau đó là `preempt_disable()` để disable preeption trên CPU. Nên gọi `spin_unlock_irqrestore()` nó sẽ làm ngược với những bước trên.
+```c
+/* some where */
+spinlock_t my_spinlock;
+spin_lock_init(my_spinlock);
+
+static irqreturn_t my_irq_handler(int irq, void *data)
+{
+    unsigned long status, flags;
+    spin_lock_irqsave(&my_spinlock, flags);
+    status = access_shared_resources();
+    spin_unlock_irqrestore(&gpio->slock, flags);
+    return IRQ_HANDLED;
+}
+```
+#### Spinlock versus mutexes
+Tranh chấp (concurrency) trong kernel, **spinlock** và **mutex** cả 2 đều có mục tiêu riêng biệt:
+- **Mutex**: protect resource của process, spinlock protect những section quan trong IRQ handler.
+- **Mutex** sleep cho đến khi lấy được khóa, spinlock spin loop cho đến khi lấy được khóa.
+**NOTE**: Preemption sẽ bị disable đối với thread đang giữ spinlock.
 ## Work deferring mechanism
+Defering (trì hoãn) là phương pháp giúp lập kế hoạch để một phần công việc được thực thi trong tương lai. Trì hoãn các hàm (bất kể loại nào) để gọi và thực thi chúng sau. Có 3 cách:
+- **SoftIRQs**: thực thi trong atomic context.
+- **Tasklets**: thực thi trong atomic context.
+- **Workqueues**: thực thi trong process context.
+
+### So sánh giữa Atomic Context và Process Context trong Linux Kernel
+
+| Đặc điểm | Atomic Context (Ngữ cảnh nguyên tử) | Process Context (Ngữ cảnh tiến trình) |
+| :--- | :--- | :--- |
+| **Đại diện** | Interrupts, SoftIRQs, Tasklets | Kernel threads, System calls, Workqueues |
+| **Khả năng ngủ (Sleep)** | **Tuyệt đối không** | **Có thể** |
+| **Khả năng bị lập lịch** | Không (Chạy liên tục cho đến khi xong) | Có (Có thể bị Scheduler tạm dừng) |
+| **Truy cập User Space** | Không thể | Có thể (Dùng `copy_to_user`, `copy_from_user`) |
+| **Cơ chế khóa (Locking)** | Spinlocks | Mutexes, Semaphores |
+| **Mức độ ưu tiên** | Rất cao (Đáp ứng phần cứng) | Thấp hơn (Xử lý tác vụ thông thường) |
 ### Softirqs and ksoftirqd
+Một **software IRQ (softirq)** hoặc software interrupt là một cơ chế deferring chỉ sử dụng process rất nhanh., bởi vì nó run với disable scheduler (trong một interrupt context). Rất hiếm khi (hầu như không) muốn làm việc trực tiếp với softirq. Những tasklet thì thể hiện của softirq, và sẽ đáp ứng đủ yêu cầu trong gần như mọi trường hợp mà cần sử dụng tới softirq.
+#### ksoftirqd
+Trong hầu hết các case, các softirq được scheduled trong hardware interrupt, nó phải được diễn ra rất nhanh, nhanh hơn cả tốc độ mà heek thống có thể xử lý chúng kịp thời. Do đó, kernel sẽ đưa chúng vào queue để tiến hành xử lý sau. **Ksoftirqds** thì chịu trách nhiệm thực thi trễ (nó chạy trong process context). Một ksoftirqd là một kernel thread dành riêng cho mỗi CPU được huy động để xử lý các software interrupt chưa được phục vụ.
+
+
+![User space and kernel space](/assets/Kernel/Kernel_Facilities_and_Helper_Functions/example2.png)
+
+
+Tiền tố `top` ví dụ từ computer, có thể nhìn thấy các mục `ksoftirqd/n`, trong đó n là CPU number để `ksoftirqds` run. `ksoftirqd` tiêu thụ quá nhiều CPU có thể là dấu hiệu overload system hoặc hệ thống đang phải gánh chịu một **interrupt storm**, điều này không phải là dấu hiệu tốt. Có thể tham khảo tệp mã nguồn kernel/softirq.c để tìm hiểu về cách các ksoftirqd được thiết kế.
 ### Tasklets
 ### Tasklet scheduling
 ### Work queues
