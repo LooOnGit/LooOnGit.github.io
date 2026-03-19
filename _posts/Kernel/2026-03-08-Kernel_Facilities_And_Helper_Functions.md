@@ -649,8 +649,21 @@ mutex_lock(&my_mutex);
 access_shared_memory();
 mutex_unlock(&my_mutex);
 ```
-Vui lòng tìm kiếm ở `include/linux/mutex.h` trong kernel source 
+Vui lòng tìm kiếm ở `include/linux/mutex.h` trong kernel source để tìm kiếm strict rule bắt buộc phải tuân theo khi làm việc với mutex:
+- Chỉ 1 task được giữ mutex ở một thời điểm, thực chất đây không hẳn là rule mà là 1 sự thật hiển nhiên.
+- Việc multiple unlock nhiều lần trên cùng một mutex là không được phép.
+- Các mutex phải được khởi tạo đúng cách thông qua API.
+- Một task đang nắm giữ mutex không thoát, bởi vì mutex sẽ chưa trả khóa, và các bên khác sẽ wait (sleep) forever.
+- Không được phép giải phóng free các vùng nhớ chứa các khóa đang ở trạng thái bị giữ (held locks).
+- Không được reinitialize mutex đang bị giữ.
+- Vì mutex có liên quan rescheduling, mutex không được sử dụng trong atomic context cũng như tasklet và trong timers.
+**NOTE**: Với `wait_queue`, không có cơ chế polling nào được dùng với mutex. Mỗi dùng `mutex_unlock()` được gọi trên một mutex, kernel check những waiter trong `wait_list`. Nếu có, một (và chỉ một) trong số chúng sẽ được wake-up và scheduled, theo đúng thứ tự trong đưa vào sleep.
 ### Spinlock
+Giống **mutex**, **spinlock** cũng là cơ chế loại trừ lẫn nhau (mutual exclusion mechanism), nó chỉ có hai trạng thái:
+- **locked** (acquired)
+- **unlocked** (released)
+
+
 ## Work deferring mechanism
 ### Softirqs and ksoftirqd
 ### Tasklets
