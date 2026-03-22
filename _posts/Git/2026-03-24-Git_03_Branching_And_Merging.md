@@ -159,5 +159,5 @@ git rebase main
 > **QUAN TRỌNG**: Không dùng `rebase` trên các nhánh **đã được push lên remote** và **đang có người khác dùng**. Vì rebase viết lại lịch sử, sẽ gây rối loạn cho người khác.
 
 ---
-**Bài trước**: [Git 02 - Vòng Đời File và Các Lệnh Cơ Bản](/posts/Git_02_Basic_Workflow_And_Commands)
-**Bài tiếp theo**: [Git 04 - Remote Repository và Cộng tác](/posts/Git_04_Remote_Repositories_And_Collaboration)
+**Bài trước**: [Git 02 - Vòng Đời File và Các Lệnh Cơ Bản](/posts/Git_02_Basic_Workflow_And_Commands/)
+**Bài tiếp theo**: [Git 04 - Remote Repository và Cộng tác](/posts/Git_04_Remote_Repositories_And_Collaboration/)

@@ -89,4 +89,4 @@ Git quản lý dữ liệu theo 3 vùng chính:
 - **Repository**: Cơ sở dữ liệu Git (nằm trong thư mục ẩn `.git`), lưu toàn bộ lịch sử.
 
 ---
-**Bài tiếp theo**: [Git 02 - Vòng Đời File và Các Lệnh Cơ Bản](/posts/Git_02_Basic_Workflow_And_Commands)
+**Bài tiếp theo**: [Git 02 - Vòng Đời File và Các Lệnh Cơ Bản](/posts/Git_02_Basic_Workflow_And_Commands/)

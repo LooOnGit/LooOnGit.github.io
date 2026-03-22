@@ -154,4 +154,4 @@ git rebase --abort
 | `git pull --rebase` | Tải về và rebase |
 
 ---
-**Bài trước**: [Git 03 - Branching và Merging](/posts/Git_03_Branching_And_Merging)
+**Bài trước**: [Git 03 - Branching và Merging](/posts/Git_03_Branching_And_Merging/)

@@ -175,5 +175,5 @@ git diff --staged
 ```
 
 ---
-**Bài trước**: [Git 01 - Giới Thiệu và Cài Đặt](/posts/Git_01_Introduction_And_Setup)
-**Bài tiếp theo**: [Git 03 - Branch và Merge](/posts/Git_03_Branching_And_Merging)
+**Bài trước**: [Git 01 - Giới Thiệu và Cài Đặt](/posts/Git_01_Introduction_And_Setup/)
+**Bài tiếp theo**: [Git 03 - Branch và Merge](/posts/Git_03_Branching_And_Merging/)
