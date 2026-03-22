@@ -30,14 +30,9 @@ git clone https://github.com/user/repo.git my_folder_name
 
 Đây là khái niệm quan trọng nhất cần nắm vững. Mỗi file trong Working Directory của bạn ở trong một trong 2 trạng thái lớn: **tracked** hoặc **untracked**.
 
-```
-  Untracked ----git add----> Staged
-  Unmodified                 |
-      |            <---------+---git commit
-  (edit file)                        |
-      |                              v
-  Modified ----git add----> Staged  Unmodified
-```
+
+![alt text](/assets/Git/02/lifecycle.png)
+
 
 Chi tiết 4 trạng thái:
 
