@@ -950,7 +950,152 @@ MODULE_DESCRIPTION("Shared workqueue");
 ```
 **NOTE**: Để có thể truyền dữ liệu vào hàm xử lý hàng đợi công việc (work queue handler) của mình, bạn có thể đã chú ý thấy rằng trong cả hai ví dụ, tôi đều nhúng (embed) cấu trúc work_struct vào bên trong cấu trúc dữ liệu tùy chỉnh của riêng tôi, và sau đó sử dụng macro container_of để truy xuất ngược lại nó. Đây là một phương pháp rất phổ biến dùng để truyền dữ liệu cho bộ xử lý hàng đợi công việc.
 #### Dedicated work queue
+**work queue** được biểu diễn bằng `struct workqueue_struct`. Công việc được đưa vào queue được biểu diễn bằng một thực thể `struct work_struct`. Có 4 bước cần thực hiện trước khi schedule công việc chạy trong (kernel thread):
+- 1. Declare/initialize a `struct workqueue_struct`.
+- 2. Create your work function.
+- 3. Create a `struct work_struct` so that your work function will be embedded into it.
+- 4. Embed your work function in the `work_struct`.
+##### Programming syntax
+Theo function cho defined trong `include/linux/workqueue.h`:
+- Declare the work and work queue:
+```c
+struct workqueue_struct *my_wq;
+struct work_struct the_work;
+```
+- Define the worker function (the handler):
+```c
+void dowork(void *data) { /* Code goes here */ };
+```
+- Initialize our work queue and embed our work into it:
+```c
+myqueue = create_singlethread_workqueue( "mywork" );
+INIT_WORK( &thework, dowork, <data-pointer> );
+```
+Chúng ta cũng có thể tạo ra các hàng đợi công việc (work queues) của mình thông qua một macro có tên là `create_workqueue`. Sự khác biệt giữa `create_workqueue` và `create_singlethread_workqueue` là: cái trước (tức là `create_workqueue`) sẽ tạo ra một hàng đợi công việc, mà đổi lại nó sẽ sinh ra một luồng nhân (kernel thread) hoạt động độc lập trên từng bộ xử lý (processor/CPU) hiện có trong hệ thống.
+- Scheduling work:
+```c
+queue_work(myqueue, &thework);
+```
+Queue after the given delay to the given worker thread:
+```c
+queue_dalayed_work(myqueue, &thework, <delay>);
+```
+Các hàm này return `false` nếu work đã trong queue and `true` trong trường hợp ngược hợp ngược lại. `delay` đại diện cho số lượng jiffies (1/100 giây) trước khi work được schedule chạy. Có thể sử dụng helper function `msecs_to_jiffies` để chuyển đổi thời gian từ mili giây sang jiffies. Ví dụ, để đưa công việc vào hàng đợi sau 5 ms, bạn có thể gọi:
+```c
+queue_delayed_work(myqueue, &thework, msecs_to_jiffies(5));
+```
+- Wait tất cả work trong queue được thực thi xong:
+```c
+void flush_workqueue(struct workqueue_struct *wq);
+```
+Hàm `flush_workqueue` sẽ sleep cho đến khi tất cả queued work đã hoàn thành việc thực thi. Các công việc vừa mới đưa thêm vào rải rác (enqueued) trong lúc này sẽ không ảnh hưởng đến tiến trình chờ đợi (waiting process). Bạn thường sử dụng hàm này trong các khối lệnh tắt thiết bị (shutdown handlers) của driver.
+- Cleanup: sử dụng `cancel_work_sync()` hoặc `cancel_delayed_work_sync()` để cancel synchronous (đồng bộ), nó sẽ hủy cho công việc nếu nó chưa bắt đầu chạy, hoặc chặn (block/chờ) cho đến khi nó hoàn thành việc thực thi. Công việc sẽ bị hủy ngay cả khi nó tự đưa mình trở lại queue (re-schedule). Cũng phải đảm bảo rằng queue (nơi công việc được đưa vào lần cuối cùng) không bị tiêu hủy trước khi tiến trình xử lý tiến trình xử lý kết thúc return. Các hàm này được sử dụng tương ứng cho công việc nondelay hoặc có độ trễ (delayed):
+```c
+int cancel_work_sync(struct work_struct *work);
+int cancel_delayed_work_sync(struct delayed_work *dwork);
+```
+Từ Linux kernel v4.8, có thể sử dụng `cancel_work()` hoặc `cancel_delayed_work()`, để cancel asynchronous (bất đồng bộ) work.
+```c
+if ( !cancel_delayed_work( &thework) ){
+    flush_workqueue(myqueue);
+    destroy_workqueue(myqueue);
+}
+```
+Version khác của cùng method và sẽ tạo chỉ một single thread cho tất cả những processors. Nếu bạn cần một delay trước khi công việc được đưa vào hàng đợi, hãy thoải mái sử dụng macro khởi tạo công việc sau đây:
+```c
+INIT_DELAYED_WORK(_work, _func);
+INIT_DELAYED_WORK_DEFERRABLE(_work, _func);
+```
+Việc sử dụng các macro trước đó đồng nghĩa với việc ngụ ý rằng nên sử dụng các hàm sau đây để đưa công việc vào hàng đợi hoặc schedule cho chúng trong hàng đợi công việc:
+```c
+int queue_delayed_work(struct workqueue_struct *wq, struct delayed_work *dwork, unsigned long delay);
+```
+`queue_work()` gắn chặt làm việc vào bộ xử lý CPU hiện tại. Có thể chỉ định chính xác CPU nào để queue hoặc schedule làm việc trong work queue:
+```c
+queue_work_on(int cpu, struct workqueue_struct *wq, struct work_struct *work);
+```
+Work với delay, có thể sử dụng:
+```c
+int queue_delayed_work_on(int cpu, struct workqueue_struct *wq, struct delayed_work *dwork, unsigned long delay);
+```
+**Example**:
+```c
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/workqueue.h> /* for work queue */
+#include <linux/slab.h> /* for kmalloc() */
+
+struct workqueue_struct *wq;
+struct work_data {
+    struct work_struct my_work;
+    int the_data;
+};
+
+static void work_handler(struct work_struct *work)
+{
+    struct work_data * my_data = container_of(work,
+    struct work_data, my_work);
+    printk("Work queue module handler: %s, data is %d\n",
+    __FUNCTION__, my_data->the_data);
+    kfree(my_data);
+}
+
+static int __init my_init(void)
+{
+    struct work_data * my_data;
+    printk("Work queue module init: %s %d\n",
+    __FUNCTION__, __LINE__);
+    wq = create_singlethread_workqueue("my_single_thread");
+    my_data = kmalloc(sizeof(struct work_data), GFP_KERNEL);
+    my_data->the_data = 34;
+    INIT_WORK(&my_data->my_work, work_handler);
+    queue_work(wq, &my_data->my_work);
+    return 0;
+}
+
+static void __exit my_exit(void)
+{
+    flush_workqueue(wq);
+    destroy_workqueue(wq);
+    printk("Work queue module exit: %s %d\n", __FUNCTION__, __LINE__);
+}
+
+module_init(my_init);
+module_exit(my_exit);
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("John Madieu <john.madieu@gmail.com>");
+```
+#### Predefined (shared) workqueue and standard workqueue functions
+Work queue được định nghĩa sẵn trong `kernel/workqueue.c`:
+```c
+struct workqueue_struct *system_wq __read_mostly;
+```
+
+
+So sánh giữa các hàm hàng đợi công việc định sẵn của kernel và chuẩn được thể hiện như sau:
+
+
+| Hàm hàng đợi công việc định sẵn | Hàm hàng đợi công việc chuẩn tương đương |
+| ------------------------------------- | ---------------------------------------------------- |
+| `schedule_work(w)`                    | `queue_work(keventd_wq, w)`                          |
+| `schedule_delayed_work(w, d)`         | `queue_delayed_work(keventd_wq, w, d)` (trên bất kỳ CPU nào) |
+| `schedule_delayed_work_on(cpu, w, d)` | `queue_delayed_work(keventd_wq, w, d)` (trên một CPU cụ thể) |
+| `flush_scheduled_work()`              | `flush_workqueue(keventd_wq)`                        |
+
 ### Kernel threads
+Các hàng đợi công việc (work queues) chạy trên nền tảng của các kernel thread. Bạn thực chất đã và đang sử dụng kernel thread bất cứ khi nào bạn dùng work queue. Đó là lý do tại sao tôi quyết định không đi sâu vào API của kernel thread.
+#### Kernel interruption mechanism
+Ngắt (Interrupt) là một tín hiệu được gửi từ phần cứng đến CPU để thông báo rằng có một sự kiện cần được xử lý. Ví dụ, khi một thiết bị ngoại vi (như bàn phím, chuột, card mạng) cần CPU chú ý, nó sẽ gửi một tín hiệu ngắt đến CPU. Ưu điểm chính mà ngắt mang lại là giúp tránh việc phải liên tục kiểm tra trạng thái thiết bị (device polling). Thiết bị sẽ tự chủ động thông báo mỗi khi có bất kỳ sự thay đổi trạng thái nào; chúng ta không cần (và không nên) đi thăm dò (poll) nó.
+#### Registering an interrupt handler
+Có thể register một callback để run khi có interruption (or interrupt line) quan tâm được kích hoạt. Có thể làm đước điều đó bằng cách sử dụng `request_irq()` function, được khai báo `request_irq()` trong `<linux/interrupt.h>`.
+```c
+int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags, const char *name, void *dev);
+```
+`request_irq()` có thể trả về lỗi (fail), và sẽ trả về 0 nếu thành công. Các element trên được giải thích chi tiết như sau:
+- `flag`: một bismask của các cờ (mask) được define ở `<linux/interrupt.h>`. Sử dụng phổ biến nhất là:
+        - `IRQF_SHARED`: Được sử dụng cho các đường ngắt (interrupt lines) có thể được chia sẻ bởi hai hay nhiều thiết bị. Mỗi thiết bị khi cùng chia sẻ chung một đường ngắt bắt buộc phải bật (set) cờ này. Nếu để trống, chỉ có duy nhất một handler được phép đăng ký cho đường IRQ đã định trước đó.
+        - `IRQF_TIMER`: Báo cho kernel biết rằng trình xử lý (handler) này bắt nguồn từ một ngắt của timer hệ thống (system timer interrupt).
+        - `IRQF_ONESHOT`: Chức năng này về cơ bản được sử dụng trong các threaded IRQ. Chỉ định kernel re-enable interurpt khi trình xử lý ngắt cứng (hardirq handler) kết thúc. Nó sẽ tiếp tục disable cho đến khi thread handler chạy xong.
 ## Threaded IRQs
 ### Threaded bottom half
 ## Invoking user space applications from the kernel
