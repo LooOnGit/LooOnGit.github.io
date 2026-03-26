@@ -1111,6 +1111,52 @@ int request_irq(unsigned int irq, irq_handler_t handler, unsigned long flags, co
         - `IRQF_SHARED`: Được sử dụng cho các đường ngắt (interrupt lines) có thể được chia sẻ bởi hai hay nhiều thiết bị. Mỗi thiết bị khi cùng chia sẻ chung một đường ngắt bắt buộc phải bật (set) cờ này. Nếu để trống, chỉ có duy nhất một handler được phép đăng ký cho đường IRQ đã định trước đó.
         - `IRQF_TIMER`: Báo cho kernel biết rằng trình xử lý (handler) này bắt nguồn từ một ngắt của timer hệ thống (system timer interrupt).
         - `IRQF_ONESHOT`: Chức năng này về cơ bản được sử dụng trong các threaded IRQ. Chỉ định kernel re-enable interurpt khi trình xử lý ngắt cứng (hardirq handler) kết thúc. Nó sẽ tiếp tục disable cho đến khi thread handler chạy xong.
+- `name`: được kernel sử dụng để nhận diện driver trong `/proc/interrupts` và `/proc/irq`.
+- `dev`: Mục tiêu chính của tham số này là được truyeenv vào như một agurment để handler. Giá trị này phải unique đối với mỗi register handler, bởi vì nó đã sử dụng xác định device. Nó có thể `NULL` cho nonshared IRQs, nhưng không bắt buộc phải có giá trị đối với các ngắt dùng chung. Cách sử dụng thông thường nhất là truyền vào một device structure, vì nó vừa đảm bảo tính duy nhất vằ có khả năng mang lại thông tin hữu ích cho handler. Mặc dù, một pointer để trỏ đến bất kỳ cấu trúc dữ liệu nào dành riêng cho device đó là đủ.
+```c
+struct my_data {
+    struct input_dev *idev;
+    struct i2c_client *client;
+    char name[64];
+    char phys[32];
+};
+
+static irqreturn_t my_irq_handler(int irq, void *dev_id)
+{
+    struct my_data *md = dev_id;
+    unsigned char nextstate = read_state(lp);
+    /* Check whether my device raised the irq or no */
+    [...]
+    return IRQ_HANDLED;
+}
+
+/* some where in the code, in the probe function */
+int ret;
+
+struct my_data *md;
+md = kzalloc(sizeof(*md), GFP_KERNEL);
+ret = request_irq(client->irq, my_irq_handler, IRQF_TRIGGER_LOW | IRQF_ONESHOT, DRV_NAME, md);
+
+/* far in the release function */
+free_irq(client->irq, md);
+```
+- `handler`: type `irq_handler_t`, được định nghĩa trong `include/linux/interrupt.h` như sau:  `typdef irqreturn_t (*irq_handler_t)(int, void )`.Nó tương đương một pointer để trỏ đến một hàm trả về kiểu `irqreturn_t`, và nhận biến kiểu `int` cùng một con trỏ `void *` là tham số parameter. Một interrupt handler sẽ trông như sau:
+```c
+static irqreturn_t my_irq_handler(int irq, void *dev)
+```
+- `irq`: value numberic value của IRQ (giống giá trị đã được sử trong hàm  `request_irq`).
+- `dev`: giống sử dụng `request_irq`.
+Cả 2 parameter được đưa cho handler. Có 2 giá trị handler có thể return, phụ thuộc liệu thiết bị của bạn có nguồn gốc từ IRQ hay không:
+- `IRQ_NONE`: Device không phải là nơi phát ra interrupt đó (Điều này xảy ra trên các IRQ lines).
+- `IRQ_HANDLED`: Device caused interrupt.
+**NOTE**: Khi viết interrupt handler, không cần lo lắng về re-entrance, bởi vì IRQ line serviced thì bị disable tất cả bộ xử lý (processors) nhằm tránh tình trạng ngắt đệ quy (recursive interrupts).
+
+
+Function giải phóng được register handler là:
+```c
+void free_irq(unsigned int irq, void *dev)
+```
+
 ## Threaded IRQs
 ### Threaded bottom half
 ## Invoking user space applications from the kernel
