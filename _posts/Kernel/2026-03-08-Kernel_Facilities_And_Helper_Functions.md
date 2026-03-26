@@ -716,6 +716,20 @@ Trong hầu hết các case, các softirq được scheduled trong hardware inte
 
 Tiền tố `top` ví dụ từ computer, có thể nhìn thấy các mục `ksoftirqd/n`, trong đó n là CPU number để `ksoftirqds` run. `ksoftirqd` tiêu thụ quá nhiều CPU có thể là dấu hiệu overload system hoặc hệ thống đang phải gánh chịu một **interrupt storm**, điều này không phải là dấu hiệu tốt. Có thể tham khảo tệp mã nguồn kernel/softirq.c để tìm hiểu về cách các ksoftirqd được thiết kế.
 ### Tasklets
+Tasklet là cơ chế **bottom-half** xây dựng trên softirq. Chúng được biểu diễn trong kernel bằng instance struct `struct tasklet_struct`:
+```c
+struct tasklet_struct
+{
+    struct tasklet_struct *next;
+    unsigned long state;
+    atomic_t count;
+    coid (*func)(unsigned long);
+    unsigned long data;
+}
+```
+
+#### Declaring a tasklet
+#### Enabling and disabling a tasklet
 ### Tasklet scheduling
 ### Work queues
 ### Kernel threads
