@@ -136,23 +136,13 @@ struct file {
     [...]
 }
 ```
-### So sánh `struct inode` và `struct file` trong Linux Kernel
+**inode** không track được vị trí hiện tại trong file (cursor position) hay mode hiện tại. Nó chỉ chừa thông tin giúp OS tìm nội dung cấu trúc file (pipe, directory, regular disk file, block/character device file, and so on).
 
-Hai cấu trúc dữ liệu cơ bản nhưng đóng vai trò hoàn toàn khác nhau trong việc quản lý tập tin của Linux:
 
-| Tiêu chí | `struct inode` (Index Node) | `struct file` (Open File) |
-| :--- | :--- | :--- |
-| **Định nghĩa** | Đại diện cho **bản thân tập tin tĩnh** nằm trên thiết bị lưu trữ. | Đại diện cho một **tập tin đang được mở** bởi một tiến trình (process). |
-| **Số lượng tồn tại** | Chỉ có **MỘT** `inode` duy nhất cho mỗi tập tin trên đĩa. | Có thể có **NHIỀU** `struct file` đại diện cho cùng một tập tin (nếu nó được mở nhiều lần bởi các tiến trình khác nhau). |
-| **Nội dung lưu trữ** | Chứa thông tin về hệ thống tập tin (loại file, vị trí block trên đĩa cứng, quyền truy cập, chủ sở hữu, kích thước...). | Chứa các thông tin về trạng thái mở (vị trí con trỏ đọc/ghi `f_pos`, chế độ mở read/write,... và con trỏ `f_inode` trỏ ngược về `inode`). |
-| **Theo dõi vị trí (Cursor)** | **Không** theo dõi vị trí đọc/ghi hiện tại bên trong tập tin. | **Có** theo dõi vị trí đọc/ghi hiện tại (thông qua trường `f_pos`). Mỗi lệnh read/write sẽ làm thay đổi giá trị này. |
-| **Chức năng thao tác** | Cung cấp cho OS cách tìm kiếm nội dung vật lý dưới ổ đĩa. | Cung cấp các thao tác (operations) như open, read, write, seek... thông qua con trỏ `f_op` (file_operations). |
-| **Khi nào được tạo ra?** | Khi tập tin được tạo/tồn tại trên thiết bị lưu trữ. | Khi người dùng (user space) gọi lệnh hệ thống (system call) `open()`. |
-| **Khi nào bị xóa?** | Khi tập tin đó bị xóa cứng (hard link count = 0) khỏi ổ đĩa. | Bị hủy khỏi RAM khi gọi lệnh `close()`. |
+**struct file** được sử dụng như một structure chung (thực tế nó giữ một con trỏ trỏ tới một cấu trúc `struct inode`) điều này đại diện cho một tập tin đang được mở và nó cung cấp một bộ các hàm (functions) liên quan đến các method `open`, `write`, `seek`, `read`, `select`, v.v.
 
-**Tóm lại (Triết lý Everything is a file):**
-* `struct inode`: Chính là "cái xác" (dữ liệu phần cứng) của tập tin nằm ở dưới kernel/ổ cứng.
-* `struct file`: Chính là "linh hồn" (trạng thái mở) của tập tin khi nó đang được tương tác/sử dụng bởi các chương trình. Nhiều `struct file` có thể cùng tham chiếu về một `struct inode` duy nhất.
+
+`struct inode` đại diện cho một file trong kernel, và một `struct file` mô tả file nó thực sự đang được mở. Có thể có nhiều file descriptor khác nhau địa diện cho cùng một tập trinh được mở đi mở lại nhiều lần, nhưng những file descriptor này sẽ trỏ tới cùng một `inode` duy nhất.
 
 ## Allocating and registering a character device
 
