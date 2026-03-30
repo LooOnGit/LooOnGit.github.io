@@ -1156,7 +1156,57 @@ Function giải phóng được register handler là:
 ```c
 void free_irq(unsigned int irq, void *dev)
 ```
+Nếu những IRQs không được shared, `free_irq` sẽ không chỉ remove handler, mà còn disable line. Ngược lại, nếu được shared, thì chỉ định danh thông qua `dev` (phải trùng khớp với giá trị đã dùng trong `request_irq`) bị removed, nhưng interrupt line vẫn sẽ duy trì và sẽ disable khi last handler đã xóa. `free_irq` sẽ block cho đến khi những interrupt thực thi cho IRQ cụ thể đã hoàn thành. Tránh cả 2 `request_irq` lẫn `free_irq` trong interrupt context.
+### Interrupt handler and lock
+Hiển nhiên là bạn đang ở trong ngữ cảnh nguyên tử (atomic context) và chỉ được phép sử dụng spinlock để xử lý tranh chấp (concurrency). Bất cứ khi nào có dữ liệu toàn cục (global data) được truy cập bởi cả mã người dùng (tiến trình người dùng, cụ thể là các lời gọi hệ thống - system call) và mã ngắt (interrupt code), vùng dữ liệu dùng chung này phải được bảo vệ bằng hàm `spin_lock_irqsave()` trong mã người dùng.
 
+
+Hãy cùng xem tại sao chúng ta không thể chỉ sử dụng spin_lock thông thường:
+- Một trình xử lý ngắt luôn có quyền ưu tiên cao hơn tiến trình người dùng, ngay cả khi tiến trình đó đang giữ một spinlock.
+- Việc chỉ vô hiệu hóa ngắt (IRQ) đơn thuần là không đủ, vì một ngắt có thể xảy ra trên một CPU khác.
+
+
+Sẽ là một thảm họa nếu một tiến trình người dùng đang cập nhật dữ liệu thì bị ngắt quãng bởi một trình xử lý ngắt cũng đang cố gắng truy cập vào chính dữ liệu đó. Việc sử dụng `spin_lock_irqsave()` sẽ vô hiệu hóa tất cả các ngắt trên CPU cục bộ, ngăn chặn lời gọi hệ thống bị gián đoạn bởi bất kỳ loại ngắt nào.
+```c
+ssize_t my_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+{
+    unsigned long flags;
+
+    /* some stuff */
+    [...]
+
+    spin_lock_irqsave(&my_lock, flags);
+    data++;
+    spin_unlock_irqrestore(&my_lock, flags);
+
+    [...]
+}
+
+static irqreturn_t my_interrupt_handler(int irq, void *p)
+{
+    /* * preemption is disabled when running interrupt handler
+     * also, the serviced irq line is disabled until the handler has completed
+     * no need then to disable all other irq. We just use spin_lock and
+     * spin_unlock 
+     */
+    spin_lock(&my_lock);
+
+    /* process data */
+    /* Kernel Facilities and Helper Functions Chapter 3 [ 82 ] */
+    [...]
+
+    spin_unlock(&my_lock);
+
+    return IRQ_HANDLED;
+}
+```
+Khi sharing data giữa các interrupt handler khác nhau (ví dụ: cùng một trình điều khiển - driver quản lý hai hoặc nhiều thiết bị, mỗi thiết bị có một đường dây ngắt IRQ riêng), cũng nên protect data bằng `spin_lock_irqsave()` trong handler, đẻ ngăn chặn IRQ khác trigger và spinning vô ích.
+### Concept of bottom halves
+#### The problem -  interrupt handler design limitations
+### The solution - bottom halves
+### Tasklets as bottom halves
+### Workqueue as bottom halves
+### Softirqs as bottom half
 ## Threaded IRQs
 ### Threaded bottom half
 ## Invoking user space applications from the kernel
