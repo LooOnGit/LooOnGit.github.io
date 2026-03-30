@@ -145,7 +145,83 @@ struct file {
 `struct inode` đại diện cho một file trong kernel, và một `struct file` mô tả file nó thực sự đang được mở. Có thể có nhiều file descriptor khác nhau địa diện cho cùng một tập trinh được mở đi mở lại nhiều lần, nhưng những file descriptor này sẽ trỏ tới cùng một `inode` duy nhất.
 
 ## Allocating and registering a character device
+Character device đại diện trong kernel dưới dạng instance của `struct cdev`. Khi viết một character device driver, mục tiêu create và register một instance có liên kết với cấu trúc `struct file_operations`, thao tác này liên kết với `struct file_operation` việc này giúp cho user space có thể thực hiện các thao tác với device.
 
+
+Các bước thực hiện:
+- 1. Cấp phát một major và một range của minor với `alloc_chrdev_region()`.
+- 2. Create một class cho device với `class_create()`, hiển thị trong `/sys/class/`.
+- 3. Set up `struct file_operation` (để truyền vào `cdev_init()`), và mỗi device cần create, call `cdev_init()` và `cdev_add()` để register device.
+- 4. Sau đó, create một `device_create()` cho mỗi device, với một proper name (tên phù hợp), kết quả là device sẽ được create vào trong `/dev` directory:
+```c
+#include <linux/module.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
+
+#define EEP_NBANK 8
+#define EEP_DEVICE_NAME "eep-mem"
+#define EEP_CLASS "eep-class"
+
+/* Global variables for device management */
+struct class *eep_class;
+struct cdev eep_cdev[EEP_NBANK];
+dev_t dev_num;
+
+/* Assuming fops are defined elsewhere in your driver */
+extern struct file_operations eep_fops;
+
+static int __init my_init(void) 
+{
+    int i;
+    int ret;
+    dev_t curr_dev;
+
+    /* 1. Request a range of minor numbers for EEP_NBANK devices */
+    ret = alloc_chrdev_region(&dev_num, 0, EEP_NBANK, EEP_DEVICE_NAME);
+    if (ret < 0) {
+        pr_err("Failed to allocate char device region\n");
+        return ret;
+    }
+
+    /* 2. Create the device class visible in /sys/class */
+    eep_class = class_create(THIS_MODULE, EEP_CLASS);
+    if (IS_ERR(eep_class)) {
+        unregister_chrdev_region(dev_num, EEP_NBANK);
+        return PTR_ERR(eep_class);
+    }
+
+    /* 3. Initialize and add each cdev instance */
+    for (i = 0; i < EEP_NBANK; i++) {
+        /* Calculate the specific device number for this bank */
+        curr_dev = MKDEV(MAJOR(dev_num), MINOR(dev_num) + i);
+
+        /* Tie file_operations to the cdev instance */
+        cdev_init(&eep_cdev[i], &eep_fops);
+        eep_cdev[i].owner = THIS_MODULE;
+
+        /* Make the device live in the kernel */
+        ret = cdev_add(&eep_cdev[i], curr_dev, 1);
+        if (ret < 0) {
+            pr_err("Failed to add cdev %d\n", i);
+            continue; 
+        }
+
+        /* 4. Create the device node in /dev (e.g., /dev/eep-mem0) */
+        device_create(eep_class, 
+                      NULL,             /* No parent device */
+                      curr_dev, 
+                      NULL,             /* No additional driver data */
+                      EEP_DEVICE_NAME "%d", i); 
+    }
+
+    pr_info("EEPROM driver initialized with %d banks\n", EEP_NBANK);
+    return 0;
+}
+
+module_init(my_init);
+```
 ## Writing file operations
 ### Exchanging data between kernel space and user space
 ### The open method
