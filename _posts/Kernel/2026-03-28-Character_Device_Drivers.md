@@ -154,76 +154,69 @@ Các bước thực hiện:
 - 3. Set up `struct file_operation` (để truyền vào `cdev_init()`), và mỗi device cần create, call `cdev_init()` và `cdev_add()` để register device.
 - 4. Sau đó, create một `device_create()` cho mỗi device, với một proper name (tên phù hợp), kết quả là device sẽ được create vào trong `/dev` directory:
 ```c
-#include <linux/module.h>
-#include <linux/init.h>
-#include <linux/fs.h>
-#include <linux/cdev.h>
-#include <linux/device.h>
-
 #define EEP_NBANK 8
 #define EEP_DEVICE_NAME "eep-mem"
 #define EEP_CLASS "eep-class"
 
-/* Global variables for device management */
 struct class *eep_class;
 struct cdev eep_cdev[EEP_NBANK];
 dev_t dev_num;
 
-/* Assuming fops are defined elsewhere in your driver */
-extern struct file_operations eep_fops;
-
-static int __init my_init(void) 
+static int __init my_init(void)
 {
     int i;
-    int ret;
     dev_t curr_dev;
 
-    /* 1. Request a range of minor numbers for EEP_NBANK devices */
-    ret = alloc_chrdev_region(&dev_num, 0, EEP_NBANK, EEP_DEVICE_NAME);
-    if (ret < 0) {
-        pr_err("Failed to allocate char device region\n");
-        return ret;
-    }
+    /* Request the kernel for EEP_NBANK devices */
+    alloc_chrdev_region(&dev_num, 0, EEP_NBANK, EEP_DEVICE_NAME);
 
-    /* 2. Create the device class visible in /sys/class */
+    /* Let's create our device's class, visible in /sys/class */
     eep_class = class_create(THIS_MODULE, EEP_CLASS);
-    if (IS_ERR(eep_class)) {
-        unregister_chrdev_region(dev_num, EEP_NBANK);
-        return PTR_ERR(eep_class);
-    }
 
-    /* 3. Initialize and add each cdev instance */
+    /* Each eeprom bank represented as a char device (cdev) */
     for (i = 0; i < EEP_NBANK; i++) {
-        /* Calculate the specific device number for this bank */
-        curr_dev = MKDEV(MAJOR(dev_num), MINOR(dev_num) + i);
-
-        /* Tie file_operations to the cdev instance */
+        /* Tie file_operations to the cdev */
         cdev_init(&eep_cdev[i], &eep_fops);
         eep_cdev[i].owner = THIS_MODULE;
 
-        /* Make the device live in the kernel */
-        ret = cdev_add(&eep_cdev[i], curr_dev, 1);
-        if (ret < 0) {
-            pr_err("Failed to add cdev %d\n", i);
-            continue; 
-        }
+        /* Device number to use to add cdev to the core */
+        curr_dev = MKDEV(MAJOR(dev_num), MINOR(dev_num) + i);
 
-        /* 4. Create the device node in /dev (e.g., /dev/eep-mem0) */
-        device_create(eep_class, 
-                      NULL,             /* No parent device */
-                      curr_dev, 
-                      NULL,             /* No additional driver data */
-                      EEP_DEVICE_NAME "%d", i); 
+        /* Now make the device live for the users to access */
+        cdev_add(&eep_cdev[i], curr_dev, 1);
+
+        /* create a device node each device /dev/eep-mem0, /dev/eep-mem1,
+         * With our class used here, devices can also be viewed under
+         * /sys/class/eep-class.
+         */
+        device_create(eep_class,
+                      NULL,             /* no parent device */
+                      curr_dev,
+                      NULL,             /* no additional data */
+                      EEP_DEVICE_NAME "%d", i); /* eep-mem[0-7] */
     }
-
-    pr_info("EEPROM driver initialized with %d banks\n", EEP_NBANK);
     return 0;
 }
-
-module_init(my_init);
 ```
 ## Writing file operations
 ### Exchanging data between kernel space and user space
+- `write()` phương thức bao gồm đọc data từ user space và sau đó được xử lý bởi kernel.
+- `read()` phương thức bao gồm đọc data từ kernel đến user space.
+
+
+`__user` để đánh dấu cho công cụ sparse (một công cụ kiểm tra được kernel sử dụng để tìm kiếm các lỗi lập trình tiềm ẩn), nhằm đảm bảo cho developer họ chuẩn bị thao tác sai cách với một con trở không đáng tin cậy (unstrusted pointer - một con trỏ có thể không hợp lệ ở dạng map địa chỉ ảo hiện tại). Developer tuyệt đối không được pheps deference (nhảy thẳng vào truy xuất dữ liệu/ giá trị) trên con trỏ này, mà bắt buộc phải sử dungj các hàm chuyên dụng của kernel mỗi khi có nhu cầu truy xuất vào vùng nhớ mà con trỏ đó đang trỏ tới.
+
+
+Để tương tác an toàn với các biến mang nhãn `__user`, kernel cung cấp một bộ các hàm chuyên dụng, bao gồm:
+- `copy_from_user()`: Copy dữ liệu từ user space sang kernel space.
+- `copy_to_user()`: Copy dữ liệu từ kernel space sang user space.
+```c
+unsigned long copy_from_user(void *to, const void __user *from, unsigned long n)
+unsigned long copy_to_user(void __user *to, const void *from, unsigned long n)
+```
+Trong cả hai trường hợp, những con trỏ có tiền tố `__user` là các con trỏ trỏ tới vùng nhớ của không gian người dùng (loại vùng nhớ không đáng tin cậy - untrusted). n đại diện cho số lượng byte cần được copy chép đi. Tham số from đại diện cho địa chỉ nguồn, và to là địa chỉ đích dể nhận dữ liệu. Cả hai hàm này đều trả về số lượng byte đã KHÔNG THỂ copy thành công. Trong trường hợp mọi thứ hoàn toàn suôn sẻ, giá trị trả về của 2 hàm sẽ là số 0.
+
+Cần hết sức lưu ý rằng đối với hàm `copy_to_user()`, nếu có một số lượng dữ liệu nào đó không thể copy thành công ra user space, hàm này sẽ tự động lấp đầy phần dung lượng bị hụt đó (pad data) cho đủ với kích thước mà bạn đã yêu cầu (số n kia kìa) bằng các byte 0.
 ### The open method
 ### The release method
 ### The write method
