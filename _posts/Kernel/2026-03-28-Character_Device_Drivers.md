@@ -217,12 +217,56 @@ unsigned long copy_to_user(void __user *to, const void *from, unsigned long n)
 Trong cả hai trường hợp, những con trỏ có tiền tố `__user` là các con trỏ trỏ tới vùng nhớ của không gian người dùng (loại vùng nhớ không đáng tin cậy - untrusted). n đại diện cho số lượng byte cần được copy chép đi. Tham số from đại diện cho địa chỉ nguồn, và to là địa chỉ đích dể nhận dữ liệu. Cả hai hàm này đều trả về số lượng byte đã KHÔNG THỂ copy thành công. Trong trường hợp mọi thứ hoàn toàn suôn sẻ, giá trị trả về của 2 hàm sẽ là số 0.
 
 Cần hết sức lưu ý rằng đối với hàm `copy_to_user()`, nếu có một số lượng dữ liệu nào đó không thể copy thành công ra user space, hàm này sẽ tự động lấp đầy phần dung lượng bị hụt đó (pad data) cho đủ với kích thước mà bạn đã yêu cầu (số n kia kìa) bằng các byte 0.
-
-
-
+#### A single value copy
+Khi copy một biến đơn giản như **char** và **int**, nhưng không type quá lớn như **struct** và **array**, kernel cung cấp macro để thực hiện như `put_user(x, ptr)` và `get_user(x, ptr)`:
+- `put_user(x, ptr);`: Macro copy một variable từ kernel space tới user space. c đại diện cho giá trị copy từ user space, và `ptr` là address đích nằm trong user space. Return 0 là success, hoặc `-EFAULT` là error. Cùng kiểu dữ liệu.
+- `get_user(x, ptr);`: Copy variable từ user space đến kernel space và ruen 0 nếu sucess hoặc `EFAULT` nếu error.
 ### The open method
-### The release method
+`open` method được gọi khi ai đó muốn open device file. Device open luôn luôn thành công trong trừng hợp phương thức này chưa được define. Thông thường sử dụng phương thức này để thực hiện khởi tạo device và data structure, và return negative error code nếu trả về 0 thành công.
+```c
+int (*open)(struct inode *inode, struct file *filp);
+```
+#### Per-device data
+`release` method được gọi khi device được closed, ngược lại hoàn tòn với method `open`. Bạn phải undeo tất cả những gì đã thực hiện trong bước open.
+- 1. Free bất kỳ private memory cấp phát trong suốt bước `open()`.
+- 2. Shut down device (nếu support) và discard mọi thứ buffer khi lần đóng cuối cùng (nếu device support multi opening, hoặc driver handle nhiều hơn một device).
+```c
+static int sram_release(struct inode *inode, struct file *filp)
+{
+    struct pcf2127 *pcf = NULL;
+    pcf = container_of(inode->i_cdev, struct pcf2127, cdev);
+
+    mutex_lock(&device_list_lock);
+    filp->private_data = NULL;
+
+    /* last close? */
+    pcf2127->users--;
+    if (!pcf2127->users) {
+        kfree(tx_buffer);
+        kfree(rx_buffer);
+        tx_buffer = NULL;
+        rx_buffer = NULL;
+        [...]
+        if (any_global_struct)
+            kfree(any_global_struct);
+    }
+
+    mutex_unlock(&device_list_lock);
+    
+    return 0;
+}   
+```
 ### The write method
+`write()` method sử dụng để send data đến device, bất cứ khi nào một user app call `write` function trên device file, kernel thực hiện trong kernel.
+```c
+ssize_t(*write)(struct file *filp, const char __user *buf, size_t count, off_t *pos);
+```
+- return value là number là số byte đã written.
+- `*buf` đại diện cho data buffer từ user space.
+- `count` size của dữ liệu yêu cầu transfer.
+- `*pos` Chỉ định vị trí bắt đầu mà data được written vào trong file.
+#### Steps to write
+
 ### The read method
 ### The llseek method
 ### The poll method
