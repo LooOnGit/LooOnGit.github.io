@@ -217,6 +217,9 @@ unsigned long copy_to_user(void __user *to, const void *from, unsigned long n)
 Trong cả hai trường hợp, những con trỏ có tiền tố `__user` là các con trỏ trỏ tới vùng nhớ của không gian người dùng (loại vùng nhớ không đáng tin cậy - untrusted). n đại diện cho số lượng byte cần được copy chép đi. Tham số from đại diện cho địa chỉ nguồn, và to là địa chỉ đích dể nhận dữ liệu. Cả hai hàm này đều trả về số lượng byte đã KHÔNG THỂ copy thành công. Trong trường hợp mọi thứ hoàn toàn suôn sẻ, giá trị trả về của 2 hàm sẽ là số 0.
 
 Cần hết sức lưu ý rằng đối với hàm `copy_to_user()`, nếu có một số lượng dữ liệu nào đó không thể copy thành công ra user space, hàm này sẽ tự động lấp đầy phần dung lượng bị hụt đó (pad data) cho đủ với kích thước mà bạn đã yêu cầu (số n kia kìa) bằng các byte 0.
+
+
+
 ### The open method
 ### The release method
 ### The write method
