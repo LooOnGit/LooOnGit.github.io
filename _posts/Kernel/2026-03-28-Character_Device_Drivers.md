@@ -410,6 +410,17 @@ ssize_t eep_read(struct file *filp, char __user *buf, size_t count, loff_t *f_po
 }
 ```
 ### The llseek method
+`llseek` function thì được gọi khi bạn move cursor trong file. Entry point phương thức này ở user space là `lseek()` system call. Xem ở man page.
+```c
+loff_t(*llseek) (struct file *filp, loff_t offset, int whence);
+```
+Tham số:
+- return value là new position trong file.
+- `loff_t` là offset, xác định vị trí sẽ bị thay đôi (di chuyển) bao nhiêu.
+- `whence` xác định vị trí bắt đầu di chuyển: 
+    - `SEEK_SET`: di chuyển từ đầu file.
+    - `SEEK_CUR`: di chuyển từ vị trí hiện tại.
+    - `SEEK_END`: di chuyển từ cuối file.
 ### The poll method
 ### The ioctl method
 ### Filling the file operations structure
