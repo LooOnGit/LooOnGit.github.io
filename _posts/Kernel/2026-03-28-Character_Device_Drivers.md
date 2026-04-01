@@ -351,6 +351,64 @@ Return value là size read.
 - `*buf`: là buffer mà nhận được từ user space.
 - `count`: là size yêu cầu transfer (size của user buffer).
 - `*pos`: Dữ liệu bắt đầu mà nên được đọc trong file.
+#### Steps to read
+- **1.** Ngăn chặn việc đọc vượt quá size, và return end-of-life:
+```c
+if (*pos >= filesize)
+    return 0; /* 0 means EOF */
+```
+- **2.** Number of bytes có thể đọc không thể vượt quá file size. Điều chỉnh `count` cách hợp lý:
+```c
+if (*pos + count > filesize)
+    count = filesize - (*pos);
+```
+- **3.** Tìm kiếm vị trí mà bắt đầu đọc:
+```c
+void *from = pos_to_address (*pos); /* convert pos into valid address */
+```
+- **4.** Copy data vào user space buffer và return một error nếu thất bại:
+```c
+sent = copy_to_user(buf, from, count);
+if (sent)
+    return -EFAULT;
+```
+- **5.** Tăng vị trí hiện tại lên tương ứng với số byte đã đọc, và return number byte đã copy:
+```c
+*pos += count;
+return count;
+```
+
+
+**Example**:
+```c
+ssize_t eep_read(struct file *filp, char __user *buf, size_t count, loff_t *f_pos)
+{
+    struct eeprom_dev *eep = filp->private_data;
+    
+    if (*f_pos >= EEP_S IZE) /* EOF */
+        return 0;
+    
+    if (*f_pos + count > EEP_SIZE)
+        count = EEP_SIZE - *f_pos;
+    
+    /* Find location of next data bytes */
+    int part_origin = PART_SIZE * eep->part_index;
+    int eep_reg_addr_start = part_origin + *pos;
+    
+    /* perform the read from the device */
+    if (read_from_device(eep_reg_addr_start, buff, count) < 0){
+        pr_err("ee24lc512: i2c_transfer failed\n");
+        return -EFAULT;
+    }
+
+    /* copy from kernel to user space */
+    if(copy_to_user(buf, dev->data, count) != 0)
+        return -EIO;
+
+    *f_pos += count;
+    return count;
+}
+```
 ### The llseek method
 ### The poll method
 ### The ioctl method
