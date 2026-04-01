@@ -266,8 +266,91 @@ ssize_t(*write)(struct file *filp, const char __user *buf, size_t count, off_t *
 - `count` size của dữ liệu yêu cầu transfer.
 - `*pos` Chỉ định vị trí bắt đầu mà data được written vào trong file.
 #### Steps to write
+Những thao tác có thể thực hiện trong phương thức này:
+- 1. Kiểm tra các yêu cầu bad hoặc invalid đến từ user space. Bước này chỉ có ý nghĩa nếu device để lộ (expose) memory của nó  (eeprom, I/O memory, v.v) nó là những thành phần giới hạn sixe.
+```c
+/* if trying to Write beyond the end of the file, return error.
+* "filesize" here corresponds to the size of the device memory (if any)
+*/
+if ( *pos >= filesize ) return -EINVAL;
+```
+- 2. Điều chỉnh `count` trên số byte còn lại không vượt quá file size. Bước này không bắt buộc, và điều kiện của nó giống step 1:
+```c
+/* filesize coerresponds to the size of device memory */
+if (*pos + count > filesize)
+    count = filesize - *pos;
+```
+- 3. Tìm ví trí nó start để write. Step này có ý nghĩa nếu device có memory mà `write()` được yêu cầu để write data vào. Tương tự step 1, 2 không bắt buộc:
+```c
+/* convert pos into valid address */
+void *from = pos_to_address( *pos );
+```
+- 4. Copy data từ user space và write nó vào kernel space:
+```c
+if (copy_from_user(dev->buffer, buf, count) != 0){
+    retval = -EFAULT;
+    goto out;
+}
+/* now move data from dev->buffer to physical device */
+```
+- 5. Write vào physical device và return một error nếu thất bại:
+```c
+write_error = device_write(dev->buffer, count);
+if ( write_error )
+    return -EFAULT;
+```
+- 6. Tăng vị trí hiện tại của cursor trong file, theo number byte đã ghi. Cuối cùng, return number byte đã copy:
+```c
+*pos += count;
+return count;
+```
 
+
+**Example**: 
+```c
+ssize_t eeprom_write(struct file *filp, const char __user *buf, size_t count, loff_t *f_pos)
+{
+    struct eeprom_dev *eep = filp->private_data;
+    ssize_t retval = 0;
+
+    /* step (1) */
+    if (*f_pos >= eep->part_size)
+    /* Writing beyond the end of a partition is not allowed. */
+    return -EINVAL;
+
+    /* step (2) */
+    if (*pos + count >= eep->part_size)
+    count = eep->part_size - *pos;
+
+    /* step (3) */
+    int part_origin = PART_SIZE * eep->part_index;
+    int register_address = part_origin + *pos;
+
+    /* step(4) */
+    /* Copy data from user space to kernel space */
+    if (copy_from_user(eep->data, buf, count) != 0)
+        return -EFAULT;
+
+    /* step (5) */
+    /* perform the write to the device */
+    if (write_to_device(register_address, buff, count) < 0){
+        pr_err("ee24lc512: i2c_transfer failed\n");
+        return -EFAULT;
+    }
+    /* step (6) */
+    *f_pos += count;
+    return count;
+}
+```
 ### The read method
+Prototype cho `read()` method:
+```c
+ssize_t (*read) (struct file *filp, char __user *buf, size_t count, loff_t *pos);
+```
+Return value là size read. 
+- `*buf`: là buffer mà nhận được từ user space.
+- `count`: là size yêu cầu transfer (size của user buffer).
+- `*pos`: Dữ liệu bắt đầu mà nên được đọc trong file.
 ### The llseek method
 ### The poll method
 ### The ioctl method
