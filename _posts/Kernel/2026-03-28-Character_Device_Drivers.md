@@ -422,5 +422,6 @@ Tham số:
     - `SEEK_CUR`: di chuyển từ vị trí hiện tại.
     - `SEEK_END`: di chuyển từ cuối file.
 ### The poll method
+
 ### The ioctl method
 ### Filling the file operations structure
