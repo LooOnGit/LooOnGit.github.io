@@ -33,10 +33,16 @@ struct platform_device {
 
 Platform driver, trước khi driver và device match, `name` field của `struct platform_device` và `static struct platform_driver.driver.name` phải giống nhau. Chỉ cần nhớ rằng, `resource` và `platform data` là những thông tin mà driver cần để hoạt động. là một array, `num_resources` phải chứa size và array. 
 ### Resource and platform data
+Trái ngược hoàn toàn với các loại thiết bị có khả năng cắm nóng (hot-pluggable), kernel hoàn toàn không biết có những thiết bị nào đang hiện diện trên hệ thống điện toán của bạn, khả năng chuyên biệt của chúng tới đâu, hay chúng cần những cấu hình gì để có thể hoạt động chính xác. Do hệ thống không hề có quá trình thương lượng tự động (auto-negotiation process) giữa phần cứng và hệ điều hành, thế nên bất kỳ thông tin nào được chủ động cung cấp cho kernel đều rất quan trọng.
+
+
+Hiện tại, có hai phương pháp để thông báo cho kernel về các cấu hình tài nguyên (như ngắt IRQ, kênh DMA, vùng nhớ, các cổng I/O, số cổng bus) cũng như phần dữ liệu (bất kỳ cấu trúc dữ liệu tùy chỉnh và riêng tư nào mà bạn có ý định truyền xuống cho driver) mà thiết bị đang yêu cầu. Cụ thể cả hai phương pháp này sẽ được thảo luận ở phần dưới.
+### Device provisioning - the new and recommended way
+
 #### Resource
 #### Platform data
 #### Where to declare platform devices?
-### Device provisioning - the new and recommended way
+
 ## Devices, drivers and bus matching
 ### How can platform devices and platform drivers match?
 #### Kernel devices and drivers-matching function
