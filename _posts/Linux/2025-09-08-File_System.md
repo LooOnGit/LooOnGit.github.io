@@ -489,7 +489,7 @@ close()
 
 ## ⚡ Cached data của file
 #### Hệ thống sử dụng 1 phần RAM làm bộ nhớ cached cho việc đọc file.
-- Việc đcọ ghi dữ liuệ trong file thông  sẽ oọc qua cached để tăng tốc độ của hệ thống. Ví dụ như việc đọc 1 byte tù ổ cứng khi đó OS vẫn đcọ cả sector là 512 bytes, tuy nhiên chỉ lấy 1 bytes trả về cho app, số bytes còn lại được cất vào cached nằm trong RAM, nếu lần đọc data nàm trong sector đó thì sẽ lấy tù cached mà không cần đọc xuống ổ cứng.
+- Việc đọc ghi dữ liệu trong file thông thường sẽ đọc qua cached để tăng tốc độ của hệ thống. Ví dụ như việc đọc 1 byte từ ổ cứng khi đó OS vẫn đọc cả sector là 512 bytes, tuy nhiên chỉ lấy 1 bytes trả về cho app, số bytes còn lại được cất vào cached nằm trong RAM, nếu lần đọc data nàm trong sector đó thì sẽ lấy từ cached mà không cần đọc xuống ổ cứng.
 - Việc ghi data thông thuòng OS sẽ ghi vào cached nằm trong RAM. Trong kernel có 1 thread sẽ định kỳ flush tất cả các cached và file. Ngoài ra có thể sử dụng sync() hoặc setting flag lúc open file để chỉ định không sử dụng cached. Wakeup flush threads: kernel 4.14
 
 #### Mỗi file khi open sẽ tạo ra inode . Mỗi inode sẽ có trỏ đến vùng nhớ cached riêng của nó.

@@ -38,8 +38,28 @@ Trái ngược hoàn toàn với các loại thiết bị có khả năng cắm 
 
 Hiện tại, có hai phương pháp để thông báo cho kernel về các cấu hình tài nguyên (như ngắt IRQ, kênh DMA, vùng nhớ, các cổng I/O, số cổng bus) cũng như phần dữ liệu (bất kỳ cấu trúc dữ liệu tùy chỉnh và riêng tư nào mà bạn có ý định truyền xuống cho driver) mà thiết bị đang yêu cầu. Cụ thể cả hai phương pháp này sẽ được thảo luận ở phần dưới.
 ### Device provisioning - the new and recommended way
-
+Phương pháp này chủ yếu được sử dụng với các phiên bản kernel đời trước, do thời điểm đó hệ thống chưa hỗ trợ cấu trúc Device Tree (Cây thiết bị). Với phương pháp này, các hàm của driver vẫn mang tính chất tổng quát (generic), và sự tồn tại của thiết bị sẽ được khai báo cứng (hard-code) trực tiếp bên trong các file mã nguồn C riêng biệt quy định cho từng loại bo mạch (board-related source files).
 #### Resource
+**Resource (Tài nguyên)** đại diện cho tất cả các thành tố cấu thành nên một thiết bị dưới góc độ của phần cứng (hardware point of view). Thiết bị cần phải gọi đến những tài nguyên này để có thể được khởi tạo và chạy chính xác. Kernel chỉ định nghĩa sẵn 6 loại tài nguyên, tất cả đều được liệt kê ở trong tệp `include/linux/ioport.h`, và chúng được sử dụng dưới dạng các cờ (flags) để mô phỏng loại của tài nguyên đó:
+```c
+#define IORESOURCE_IO 0x00000100 /* PCI/ISA I/O ports */
+#define IORESOURCE_MEM 0x00000200 /* Memory regions */
+#define IORESOURCE_REG 0x00000300 /* Register offsets */
+#define IORESOURCE_IRQ 0x00000400 /* IRQ line */
+#define IORESOURCE_DMA 0x00000800 /* DMA channels */
+#define IORESOURCE_BUS 0x00001000 /* Bus */
+```
+Một resource được đại diện trong kernel như là một instance `struct resource`:
+```c
+struct resource {
+    resource_size_t start;
+    resource_size_t end;
+    const char *name;
+    unsigned long flags;
+};
+```
+Từng thành phần trong structure:
+- `start/end`: Đại diện cho vị trí begin/end của resource.  
 #### Platform data
 #### Where to declare platform devices?
 
