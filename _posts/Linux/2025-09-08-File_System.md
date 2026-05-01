@@ -492,9 +492,33 @@ close()
 - Việc đọc ghi dữ liệu trong file thông thường sẽ đọc qua cached để tăng tốc độ của hệ thống. Ví dụ như việc đọc 1 byte từ ổ cứng khi đó OS vẫn đọc cả sector là 512 bytes, tuy nhiên chỉ lấy 1 bytes trả về cho app, số bytes còn lại được cất vào cached nằm trong RAM, nếu lần đọc data nàm trong sector đó thì sẽ lấy từ cached mà không cần đọc xuống ổ cứng.
 - Việc ghi data thông thuòng OS sẽ ghi vào cached nằm trong RAM. Trong kernel có 1 thread sẽ định kỳ flush tất cả các cached và file. Ngoài ra có thể sử dụng sync() hoặc setting flag lúc open file để chỉ định không sử dụng cached. Wakeup flush threads: kernel 4.14
 
+
+**Ví dụ:** Khi gọi system call read() hoặc write() thì đợi kernel ghi và hardware rồi trả về cho user space. Thì mỗi lần vậy rất lâu thì khi lần 1 đọc/ghi sẽ phải tốn thời gian đợi kernel phải hồi thì lần 2 đọc/ghi sẽ lấy từ cache trước xem có chưa nếu cache có sẽ nhanh hơn nên sẽ nhanh hơn.
+
 #### Mỗi file khi open sẽ tạo ra inode . Mỗi inode sẽ có trỏ đến vùng nhớ cached riêng của nó.
 - **Source code:** struct inode -> mapping
 
 #### Bộ nhớ cached của 1 file có thể được flush theo cách chủ động hoặc bị động
 - Chủ động flush cached: gọi hàm flush, sync(), fsync() hoặc close() file
 - Bị động flush cached: Process kết thúc bằng hàm exit hoặc câu lệnh return hoặc được kernel thread flush cached.
+
+#### Thời gian sync data của cache xuống hardware
+Khoảng thời gian kernel kiểm tra ghi dữ liệu.
+```bash
+cat /proc/sys/vm/dirty_writeback_centisecs
+```
+Kết quả ra là: 500 nghĩa là 5 giây. Đơn vị là 1/100 giây.
+
+
+Khoảng thời gian tối đã data được nằm trong cache. Những data nào quá thời gian này sẽ bị flush xuống hardware. 
+```bash
+cat /proc/sys/vm/dirty_expire_centisecs
+```
+Kết quả ra là: 3000 nghĩa là 30 giây. Đơn vị là 1/100 giây.
+
+#### Hàm để sync data của cache xuống hardware
+```c
+void sync(void);
+int fsync(int fd);
+```
+Nếu ổ cứng cứ ghi 1 chỗ thì sẽ dẫn đến mòn không đều.
