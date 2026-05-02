@@ -107,9 +107,9 @@ Nếu một signal khác loại đến (ví dụ đang xử lý SIGINT, thì có
 Nếu bạn muốn cho phép reentrant handler (tức là handler có thể bị ngắt bởi chính signal đó nhiều lần), bạn phải dùng sigaction() với cờ SA_NODEFER (hoặc SA_NOMASK).
 
 **Lưu ý**:
-- 1. Trong 1 **Signal Handler** chỉ xử lý gọn, như chỉ thay đổi giá trị biến toàn cục gửi ra ngoài thì ở ngoài **Stack Machine** đoán chạy 1 hàm riêng bên ngoài thôi.
-- 2. Không nên malloc trong **Signal Handler**. Tránh đưa các hàm xử lý chuỗi.
-- 3. Reentrant và Non Reentrant 
+- Trong 1 **Signal Handler** chỉ xử lý gọn, như chỉ thay đổi giá trị biến toàn cục gửi ra ngoài thì ở ngoài **Stack Machine** đoán chạy 1 hàm riêng bên ngoài thôi.
+- Không nên malloc trong **Signal Handler**. Tránh đưa các hàm xử lý chuỗi.
+- **Reentrant** và **Non Reentrant** 
 
 
 **VD:** Non-reentrant (không an toàn vì dùng printf)
