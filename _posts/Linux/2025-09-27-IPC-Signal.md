@@ -29,11 +29,15 @@ Bảng dưới mô tả khi nhận signal nó sẽ làm gì.
 Khi dùng `ctrl + c` là SIGINT sẽ thực hiện terminal như bản trên.
 
 Signal hander có thể thay đổi dùng đế system call signal().
+
+
 ```c
 void (*signal(int sig, void (*handler)(int)))(int);
 ```
 
 **VD**: Khi bạn nhấn Ctrl+C, chương trình không thoát mà chạy handler() in ra "Received signal 2" (2 = SIGINT).
+
+
 ```c
 #include <stdio.h>
 #include <signal.h>
@@ -54,7 +58,11 @@ int main() {
     return 0;
 }
 ```
+
+
 Để hủy 1 **Signal** để không làm gì hết.
+
+
 ```c
 #include <stdio.h>
 #include <signal.h>
@@ -74,12 +82,18 @@ int main() {
     return 0;
 }
 ```
+
+
 Chạy chương trình trên, nhấn Ctrl+C thì chương trình không thoát (vì signal `SIGINT` bị ignore). Bạn chỉ có thể thoát bằng cách kill -9 PID (`SIGKILL` thì không thể hủy được).
 
+
 Khi muốn đưa signal về hàm mặc định.
+
+
 ```c
 signal(SIGINT, SIG_IGN); // ignore signal
 ```
+
 
 ### Signal tương tự như ngắt
 ![alt text](/assets/Linux/IPC_Signal/Process_singal.png)
@@ -96,7 +110,10 @@ Nếu bạn muốn cho phép reentrant handler (tức là handler có thể bị
 - 1. Trong 1 **Signal Handler** chỉ xử lý gọn, như chỉ thay đổi giá trị biến toàn cục gửi ra ngoài thì ở ngoài **Stack Machine** đoán chạy 1 hàm riêng bên ngoài thôi.
 - 2. Không nên malloc trong **Signal Handler**. Tránh đưa các hàm xử lý chuỗi.
 - 3. Reentrant và Non Reentrant 
+
+
 **VD:** Non-reentrant (không an toàn vì dùng printf)
+
 ```c
 #include <stdio.h>
 #include <signal.h>
@@ -117,7 +134,10 @@ int main() {
     return 0;
 }
 ```
+
+
 👉 Ở đây, nếu Ctrl+C xảy ra khi printf trong main chưa xong, thì printf trong handler lại chạy → dễ sinh lỗi hoặc in ra loạn dòng.
+
 
 **VD:** Reentrant/An toàn (dùng write)
 ```c
@@ -141,7 +161,10 @@ int main() {
     return 0;
 }
 ```
+
+
 `write()` là hàm async-signal-safe nên có thể gọi trong signal handler mà không lo deadlock hay hỏng dữ liệu.
+
 
 # Non-Reentrant vs Reentrant Functions
 
