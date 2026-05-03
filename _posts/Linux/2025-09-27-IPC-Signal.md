@@ -275,6 +275,56 @@ Hàm non-reentrant là hàm **không an toàn** khi được gọi bởi nhiều
 | **Thông tin user**    | `getpwnam`, `getpwuid`                                                                                                                                                      | `getpwnam_r`, `getpwuid_r`                                    |
 | **Thông tin host**    | `gethostbyname`, `gethostbyaddr`                                                                                                                                            | `gethostbyname_r`, `gethostbyaddr_r`                          |
 
+### Ví dụ lỗi Deadlock khi dùng `malloc` trong Signal Handler
+
+Hàm `malloc` và `free` trong thư viện chuẩn C thường sử dụng cơ chế **Lock (khóa)** nội bộ để bảo vệ cấu trúc dữ liệu Heap. Do đó, đây là các hàm **non-reentrant**.
+
+Hãy xem đoạn mã sau:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <signal.h>
+
+void handler(int sig) {
+    // ❌ Gọi malloc trong signal handler (Cực kỳ không an toàn)
+    char *buf = malloc(100); 
+    if (buf) {
+        // snprintf cũng là non-reentrant
+        snprintf(buf, 100, "Signal caught!\n"); 
+        write(STDOUT_FILENO, buf, 15);
+        free(buf);
+    }
+}
+
+int main() {
+    signal(SIGINT, handler);
+
+    while (1) {
+        // Vòng lặp liên tục cấp phát và giải phóng bộ nhớ
+        char *data = malloc(1024); // ⚠️ Có thể bị ngắt ngay tại đây
+        sleep(1);
+        free(data);
+    }
+
+    return 0;
+}
+```
+
+**Chuyện gì sẽ xảy ra?**
+
+Một lỗi sai logic rất nguy hiểm được gọi là **Deadlock (treo chương trình)** có thể xảy ra theo kịch bản sau:
+
+1. Hàm `main` đang thực thi `malloc(1024)`. Bên trong `malloc`, chương trình sẽ **lấy khóa (acquire lock)** bộ nhớ Heap để tránh xung đột.
+2. Đúng vào tích tắc khóa vừa được lấy xong (nhưng `malloc` chưa chạy xong), một tín hiệu `SIGINT` (do người dùng nhấn `Ctrl + C`) gửi tới.
+3. Hệ điều hành lập tức **ngắt ngang** luồng chính (khi khóa vẫn chưa được nhả ra) và nhảy vào thực thi hàm `handler()`.
+4. Trong `handler()`, code lại gọi tiếp `malloc(100)`. Hàm này bắt đầu chạy và cố gắng lấy khóa Heap một lần nữa.
+5. Do khóa đang bị giữ bởi luồng chính (hiện đang nằm chờ `handler` chạy xong), `malloc` bên trong `handler` sẽ phải **đứng chờ (block)** mãi mãi để lấy khóa.
+6. **Kết quả:** `handler` đợi `main` nhả khóa, `main` đợi `handler` chạy xong để chạy tiếp và nhả khóa. Chương trình bị treo cứng vĩnh viễn (Deadlock).
+
+> **Lỗi "bóng ma" cực kỳ khó debug:** Trong đoạn code trên có chứa lệnh `sleep(1)`, nghĩa là 99.9% thời gian chạy thì chương trình đang nằm ngủ (lúc này không hề giữ khóa). Nếu bạn tự test bằng tay và ấn `Ctrl+C`, **chương trình vẫn sẽ in ra chữ "Signal caught!" bình thường**. Lỗi treo cứng chỉ xảy ra vào khoảnh khắc "xui xẻo" ngắt rơi đúng vào 0.1% thời gian `malloc` đang thi hành. Đặc thù ngẫu nhiên này khiến code mang lên Production thỉnh thoảng sập mà không ai biết tại sao. Đó là lý do tuyệt đối không được dùng hàm Non-reentrant trong Signal!
+
 ---
 
 ## Lưu ý khi viết Signal Handler
