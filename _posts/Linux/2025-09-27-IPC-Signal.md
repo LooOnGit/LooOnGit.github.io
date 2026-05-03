@@ -165,15 +165,106 @@ int main() {
 
 `write()` là hàm async-signal-safe nên có thể gọi trong signal handler mà không lo deadlock hay hỏng dữ liệu.
 
+### Quay lại signal handler default
+#### Dùng con trỏ hàm signal 
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
 
-# Non-Reentrant vs Reentrant Functions
+void handlerSingal(int sig)
+{
+    printf("Receive the signal %d\n", sig);
+}
+
+int main()
+{
+    void (*oldHandler)(int);
+    oldHandler = signal(SIGINT, handlerSingal);
+    
+
+    while(1)
+    {
+        printf("Hello World\n");
+        for(int i = 0; ; i++)
+        {
+            sleep(1);
+            if(i == 10)
+            {
+                signal(SIGINT, oldHandler);
+                printf("restore the signal handler\n");
+            }
+        }
+    }
+    
+    return 0;
+}
+```
+
+#### Dùng MACRO
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <string.h>
+#include <signal.h>
+
+void handlerSingal(int sig)
+{
+    printf("Receive the signal %d\n", sig);
+}
+
+int main()
+{
+    signal(SIGINT, handlerSingal);
+    
+
+    while(1)
+    {
+        printf("Hello World\n");
+        for(int i = 0; ; i++)
+        {
+            sleep(1);
+            if(i == 10)
+            {
+                signal(SIGINT, SIG_DFL);
+                printf("restore the signal handler\n");
+            }
+        }
+    }
+    
+    return 0;
+}
+``` 
+
+## Non-Reentrant vs Reentrant Functions
 
 Trong C trên Unix/Linux, nhiều hàm **không reentrant** vì dùng buffer static, biến toàn cục, hoặc quản lý tài nguyên chia sẻ.
 Một số hàm có phiên bản **reentrant** (hậu tố `_r`) an toàn hơn khi dùng trong signal handler hoặc multithread.
 
----
+### Reentrant
 
-## Bảng so sánh
+Là một hàm "an toàn" để có thể bị ngắt (interrupt) khi đang chạy dở dang, và được gọi lại một lần nữa (từ một luồng khác hoặc từ một signal handler) mà không làm sai lệch dữ liệu hay gây lỗi chương trình.
+
+**Đặc điểm:**
+- **Không sử dụng biến toàn cục**: Mọi dữ liệu cần thiết đều được truyền qua tham số hoặc được cấp phát riêng cho từng luồng.
+- **Không sử dụng bộ nhớ đệm (buffer) chia sẻ**: Nếu cần buffer, mỗi luồng phải tự cấp phát.
+- **An toàn với signal handler**: Có thể gọi trong signal handler mà không làm hỏng trạng thái chương trình.
+
+### Non-Reentrant
+
+Hàm non-reentrant là hàm **không an toàn** khi được gọi bởi nhiều luồng cùng lúc hoặc trong signal handler.
+
+**Nguyên nhân:**
+- **Sử dụng biến static/global**: Dữ liệu chia sẻ giữa các lần gọi hàm.
+- **Sử dụng bộ nhớ đệm chia sẻ**: Ví dụ như `asctime()` sử dụng buffer tĩnh nội bộ.
+- **Không đảm bảo thread-safe**: Các hàm thư viện chuẩn cũ (ví dụ: `printf`, `strtok`) thường không thread-safe.
+
+### Bảng so sánh
 
 | Nhóm hàm              | Non-Reentrant (không an toàn)                                                                                                                                               | Reentrant (an toàn)                                           |
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
@@ -187,7 +278,7 @@ Một số hàm có phiên bản **reentrant** (hậu tố `_r`) an toàn hơn k
 ---
 
 ## Lưu ý khi viết Signal Handler
-
+* Càn ngắn càn tốt.
 * Chỉ dùng **async-signal-safe functions** (xem `man 7 signal`), ví dụ:
 
   * `write`, `read`, `signal`, `kill`, `_exit`, `waitpid`
