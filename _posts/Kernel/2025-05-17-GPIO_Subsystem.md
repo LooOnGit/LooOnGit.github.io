@@ -18,6 +18,8 @@ Bài viết này đóng vai trò là bản đồ (roadmap) để tìm hiểu v�
 
 ## Interget Based and Descriptor Based
 ### Interget Based
+#### Các API
+
 
 ### Descriptor Based
 
