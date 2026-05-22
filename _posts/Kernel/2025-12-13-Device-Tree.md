@@ -1,11 +1,11 @@
 ---
 title: "Device Tree - Mô Tả Phần Cứng Cho Linux"
 date: 2025-12-13 13:56:25 +0800
-categories: [BeagleBone]
-tags: [BeagleBone, Device-Tree, Linux, Embedded]
+categories: [Kernel]
+tags: [Kernel]
 ---
 
-# 🌳 Device Tree trong BeagleBone
+# 🌳 Device Tree
 
 ## 📖 Device Tree là gì?
 
