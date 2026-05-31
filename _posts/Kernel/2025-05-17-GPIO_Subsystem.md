@@ -1,8 +1,8 @@
 ---
 title: "GPIO Subsystem"
 date: 2025-05-17 06:20:00 +0700
-categories: [Linux]
-tags: [Linux]
+categories: [Kernel]
+tags: [Kernel]
 ---
 
 # 📘 GPIO Subsystem
@@ -24,6 +24,10 @@ GPIO (General Purpose Input/Output) là các chân đa năng của SoC có thể
 
 ### Cơ chế hoạt động
 Mỗi chân GPIO được gán một con số duy nhất trên toàn hệ thống (ví dụ: GPIO chip A chiếm số 0–31, GPIO chip B chiếm số 32–63). Lập trình viên phải tự tra cứu và hard-code con số này vào driver.
+```bash
+debian@arm:~$ cat /sys/class/gpio/gpiochip32/base
+32
+```
 
 ### Các API
 ```c

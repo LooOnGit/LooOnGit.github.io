@@ -1,8 +1,8 @@
 ---
 title: "Enviroment"
 date: 2025-11-09 13:56:25 +0800
-categories: [BeagleBone]
-tags: [BeagleBone]
+categories: [Kernel]
+tags: [Kernel][Beaglebone]
 ---
 
 # 🐧 Enviroment Beaglebone

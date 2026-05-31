@@ -1,8 +1,8 @@
 ---
 title: "CHARACTER DEVICE FILE"
 date: 2025-11-09 19:29:00 +0700
-categories: [BeagleBone]
-tags: [BeagleBone]
+categories: [Kernel]
+tags: [Kernel]
 ---
 
 # 🐧 CHARACTER DEVICE FILE
