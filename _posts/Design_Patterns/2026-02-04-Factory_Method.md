@@ -2,7 +2,7 @@
 title: "Factory Method"
 date: 2026-04-02 03:39:05 +0800
 categories: [Design Patterns]
-tags: [Design Patterns][Creational patterns]
+tags: [Design Patterns]
 ---
 
 # FACTORY METHOD
