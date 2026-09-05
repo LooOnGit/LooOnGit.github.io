@@ -2,7 +2,7 @@
 title: "Enviroment"
 date: 2025-11-09 13:56:25 +0800
 categories: [Kernel]
-tags: [Kernel][Beaglebone]
+tags: [Kernel, Beaglebone]
 ---
 
 # 🐧 Enviroment Beaglebone
