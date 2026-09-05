@@ -205,8 +205,21 @@
       "templater-obsidian:Templater": false
     }
   },
-  "active": "95c7399cb86d4015",
+  "active": "46cca4388929517d",
   "lastOpenFiles": [
+    "Kernel/2025-07-16-Queue.md",
+    "Edge_AI/2026-09-05-temp.md",
+    "Edge_AI/2026-08-17-What_Makes_an_AI_Model_Edge_Deployable.md",
+    "Edge_AI/2026-08-17-Understanding_Edge_AI_Hardware.md",
+    "Edge_AI/2026-08-17-Measuring_Edge_AI_Performance.md",
+    "Edge_AI/2026-08-17-From_Prototype_to_Production_Edge_AI.md",
+    "Edge_AI/2026-08-17-From_AI_Model_to_Edge_Device.md",
+    "Edge_AI/2026-08-17-Deploying_AI_Models_with_DRP_AI.md",
+    "Edge_AI/2026-08-17-Deploying_AI_Models_with_DEEPX.md",
+    "Edge_AI/2026-08-17-Benchmarking_DRP_AI_vs_DEEPX.md",
+    "Edge_AI/2026-08-17-AI_Model_Optimization_for_Edge_Devices.md",
+    "Edge_AI",
+    "BLE_ATT_GATT",
     "Assets/Pasted image 20260905163515.png",
     "BLE/2026-08-20-BLE_Introduction.md",
     "Assets/Pasted image 20260820083321.png",
