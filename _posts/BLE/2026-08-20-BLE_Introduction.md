@@ -24,7 +24,7 @@ Bluetooth LE cũng khác biệt so với Bluetooth Classic ở một số khía 
 |         **Maximum application data throughput**          |               1.4 Mbps               |
 | **Maximum range at reduced data rates (125 & 500 kbps)** |               ~1000 m                |
 ## Bluetooth LE protocol stack
-![](Pasted%20image%2020260905163515.png)
+![alt text](/assets/BLE/protocol_stack.png)
 Ở tầng trên cùng là **lớp ứng dụng (application)**. Đây là tầng mà người dùng tương tác, thông qua các API, để sử dụng giao thức Bluetooth LE. Các thành phần quan trọng của tầng ứng dụng bao gồm các hồ sơ (profiles), dịch vụ (services) và đặc tính (characteristic.
 ### Host
 - **Logical Link Control & Adaptation Protocol (L2CAP)** : Cung cấp các service đóng gói data cho các layer tầng trên.
