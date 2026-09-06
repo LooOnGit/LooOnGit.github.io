@@ -29,12 +29,14 @@ Bluetooth LE cũng khác biệt so với Bluetooth Classic ở một số khía 
 ![alt text](/assets/BLE/protocol_stack.png)
 
 Ở tầng trên cùng là **lớp ứng dụng (application)**. Đây là tầng mà người dùng tương tác, thông qua các API, để sử dụng giao thức Bluetooth LE. Các thành phần quan trọng của tầng ứng dụng bao gồm các hồ sơ (profiles), dịch vụ (services) và đặc tính (characteristic.
+
 ### Host
 - **Logical Link Control & Adaptation Protocol (L2CAP)** : Cung cấp các service đóng gói data cho các layer tầng trên.
 - **Security Manager Protocol (SMP)** : định nghĩa và cung cấp các phương thức để truyền thông an toàn.
 - **Attribute Protocol (ATT)** : cho phép một thiết bị hiển thị/cung cấp các phần dữ liệu cụ thể cho một thiết bị khác.
 - **Generic Attribute Profile (GATT)** : định nghĩa các quy trình phụ (sub-procedures) cần thiết để sử dụng tầng ATT.
 - **Generic Access Profile (GAP)** : giao tiếp trực tiếp với ứng dụng để xử lý việc khám phá thiết bị và các dịch vụ liên quan đến kết nối.
+
 ### Controller
 - **Physical Layer (PHY)** : Quyết định cách dữ liệu thực tế được điều chế (modulated) lên sóng vô tuyến, cũng như cách nó được truyền và nhận.
 - **Link Layer (LL)** : Quản lý trạng thái của khối vô tuyến (radio), được định nghĩa là một trong các trạng thái sau – chờ (standby), quảng bá (advertising), quét (scanning), khởi tạo (initiating), kết nối (connection).
