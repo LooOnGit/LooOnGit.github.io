@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "BLE/2026-08-20-BLE_Introduction.md",
+                "file": "BLE/2026-09-05-ATT_&_GATT.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2026-08-20-BLE_Introduction"
+              "title": "2026-09-05-ATT_&_GATT"
             }
           }
         ]
@@ -205,8 +205,13 @@
       "templater-obsidian:Templater": false
     }
   },
-  "active": "46cca4388929517d",
+  "active": "95c7399cb86d4015",
   "lastOpenFiles": [
+    "Assets/Pasted image 20260906172015.png",
+    "Assets/Pasted image 20260906171246.png",
+    "BLE/2026-09-05-GAP.md",
+    "BLE/2026-09-05-ATT_&_GATT.md",
+    "BLE/2026-08-20-BLE_Introduction.md",
     "Kernel/2025-07-16-Queue.md",
     "Edge_AI/2026-09-05-temp.md",
     "Edge_AI/2026-08-17-What_Makes_an_AI_Model_Edge_Deployable.md",
@@ -221,7 +226,6 @@
     "Edge_AI",
     "BLE_ATT_GATT",
     "Assets/Pasted image 20260905163515.png",
-    "BLE/2026-08-20-BLE_Introduction.md",
     "Assets/Pasted image 20260820083321.png",
     "Assets",
     "Pasted image 20260820082232.png",
