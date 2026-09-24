@@ -23,7 +23,7 @@ Khi device ở trạng thái advertising state, nó sẽ phát ra các gói qu�
 BLE communicate thông qua 40 channel khác nhau. Trong đó được chia thành 3 primary channel và 37 channel phụ. Mỗi channel rộng 2MHz.
 - **Primary channel**: được sử dụng trong mục đích advertisement.
 - **Secondary channel**: Đôi lúc cũng được sử dụng cho mục đích advertisement, nhưng chủ yếu dử dụng để truyền dữ liệu sau khi đã thiết lập kết nối.
-![](Pasted%20image%2020260924084155.png)
+![alt text](/assets/BLE/advertising_channels.png)
 Để đảm bảo một mức độ dự phòng, advertising packet được gửi trên 3 primary advertising channels, channels 37, 38, 39. Device cũng sẽ scan 3 channels này để tìm kiếm advertising devices.
 
 
@@ -47,12 +47,12 @@ Trong ví dụ này:
 Bởi vì device advertise trên các channel khác nhau, scanner sẽ rotate xung quanh các channel, bằng cách switch các channel sau mỗi scan interval.
 
 
-![](Pasted%20image%2020260924093537.png)
+![alt text](/assets/BLE/scan_interval_window.png)
 Scanner sẽ tiêu tốn năng lượng hơn việc advertising.
 
 ## Scan request and respone
 Khi một peripheral là advertising, một central có thể chọn gửi scan request đến peripheral, hỏi thêm thông tin không có trong advertisement packets. Nếu scan request được chấp nhận, peripheral sẽ reponse qua 3 primary channels.
-![](Pasted%20image%2020260924094657.png)
+![alt text](/assets/BLE/scan_request_response.png)
 Đây là cách để thiết bị ngoại vi gửi thêm dữ liệu mà không cần phải thêm thiết lập kết nối với thiết bị central first. Ngoài ra, peripheral có thể chọn gửi lại respone empty nếu nó không còn thông tin nào để cung cấp.
 
 
