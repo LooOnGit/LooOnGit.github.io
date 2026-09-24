@@ -55,8 +55,32 @@ Khi một peripheral là advertising, một central có thể chọn gửi scan 
 ![alt text](/assets/BLE/scan_request_response.png)
 Đây là cách để thiết bị ngoại vi gửi thêm dữ liệu mà không cần phải thêm thiết lập kết nối với thiết bị central first. Ngoài ra, peripheral có thể chọn gửi lại respone empty nếu nó không còn thông tin nào để cung cấp.
 
+# Advertising types
+Có nhiều cách khác nhau để peripheral có thể advertise.
+- **Connectable vs non-connectable:** Xác định liệu central có thể connect peripheral hoặc không.
+- **Connectable vs non-connectable:** Xác định nếu peripheral chấp nhận scan request từ một scanner.
+- **Directed vs undirected:** Xác định rằng liệu advertisement packets có được gửi đến scanner hoặc không.
 
 
+|                    | Connectable | Scannable | Directed |
+|--------------------|:-----------:|:---------:|:--------:|
+| ADV_IND            |      x      |     x     |          |
+| ADV_DIRECT_IND     |      x      |           |     x    |
+| ADV_SCAN_IND       |             |     x     |          |
+| ADV_NONCONN_IND    |             |           |          |
+
+# Bluetooth address 
+Mỗi BLE device được định danh bằng address 48-bit. Bluetooth address được phân loại public hay random. Random address thì có resolvable or non-resolvable.
 
 
+![alt text](/assets/BLE/bluetooth_address_types.png)
+
+Một Bluetooth LE devie sử dụng ít nhất một address type:
+- Public address.
+- Random static address.
+- Random private resolvable.
+- Random private non-resolvate.
+
+
+Public address được assign tới device lấy ra từ kho của IEEE cùng nhóm với MAC, do đó giới thiệu như là Blutooth MAC address.
 

@@ -11,10 +11,14 @@
             "id": "5f31dbc4e783b618",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "BLE/2026-09-24-Bluetooth_LE_Advertising.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "2026-09-24-Bluetooth_LE_Advertising"
             }
           }
         ]
@@ -95,7 +99,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 421.5
   },
   "right": {
     "id": "795569d09bd3a348",
@@ -203,6 +207,9 @@
   },
   "active": "5f31dbc4e783b618",
   "lastOpenFiles": [
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.7772.932a55cd714b",
+    "Assets/Pasted image 20260924220130.png",
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.7772.c986fa6d7a5f",
     "BLE/2026-09-24-Bluetooth_LE_Advertising.md",
     "Assets/Pasted image 20260924094657.png",
     "Assets/Pasted image 20260924093537.png",
