@@ -8,7 +8,7 @@ tags:
 ---
 # Bluetooth LE Advertising
 # Overview 
-Advertising trong BLE sử dụng cho mục đích broadcast (phát sóng) dữ liệu đến các thiết bị lân cận hoặc thông báo sự hiện diwjw của nó để một thiết bị khác có thể kết nối vào.
+Advertising trong BLE sử dụng cho mục đích broadcast (phát sóng) dữ liệu đến các thiết bị lân cận hoặc thông báo sự hiện diện của nó để một thiết bị khác có thể kết nối vào.
 
 # Advertising process
 ## Advertising and discovery 
@@ -83,4 +83,23 @@ Một Bluetooth LE devie sử dụng ít nhất một address type:
 
 
 Public address được assign tới device lấy ra từ kho của IEEE cùng nhóm với MAC, do đó giới thiệu như là Blutooth MAC address.
+
+## Public address
+Một public address đã được fixed trong device lúc sản xuất. Dịa chỉ này được đăng ký với IEEE, và nó duy nhất trên toàn câu đối với thiết bị đó, không thể thay đổi trong suôt vòng đời của thiết bị. Có một khoản phí liên quan đến việc có được loại địa chỉ này.
+## Random address
+Random address được  sử dụng phổ biến không yêu cầu đăng kí với IEEE. Được lập trình hoặc được tạo ra trong thời gian runtime. Có thể là static address hoặc private address.
+### Random static address
+Có thể được allocate và fixed trong vòng đời của device. Nó có thể được thay thế lúc bootup, nhưng không trong lúc runtime.
+### Random private address
+Có thể được sử dụng khi một thiết bị muốn protect privacy của nó. Địa chỉ có thể thay đổi theo chu kỳ để ẩn danh tính device và theo dõi device.
+### #Resolvable random private address 
+
+Resolvable private address đúng như tên gọi nó có thẻ resolvable, vì chung có một khóa share trước (pre-share key) để xác định địa chỉ mới mỗi khi thay đổi. Key này là Indentity Resolving Key - IRK), được dùng để vừa generate and resolve địa chỉ random.
+
+
+IRK cho phép bên còn lại chuyển đổi địa chỉ riêng từ ngẫu nghiên thành địa chỉ Bluetooth LE thực của thiết bị.
+### #Non-resolvable random private address
+Là loại address mà các device khác không resolvable được, và chỉ nhằm mục đích ngăn chặn việc theo dõi. Loại địa chỉ này không được sử dụng phổ biến.
+
+
 
