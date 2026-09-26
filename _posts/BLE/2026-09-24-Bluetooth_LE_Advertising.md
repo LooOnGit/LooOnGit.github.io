@@ -83,7 +83,6 @@ Một Bluetooth LE devie sử dụng ít nhất một address type:
 
 
 Public address được assign tới device lấy ra từ kho của IEEE cùng nhóm với MAC, do đó giới thiệu như là Blutooth MAC address.
-
 ## Public address
 Một public address đã được fixed trong device lúc sản xuất. Dịa chỉ này được đăng ký với IEEE, và nó duy nhất trên toàn câu đối với thiết bị đó, không thể thay đổi trong suôt vòng đời của thiết bị. Có một khoản phí liên quan đến việc có được loại địa chỉ này.
 ## Random address
@@ -92,14 +91,56 @@ Random address được  sử dụng phổ biến không yêu cầu đăng kí v
 Có thể được allocate và fixed trong vòng đời của device. Nó có thể được thay thế lúc bootup, nhưng không trong lúc runtime.
 ### Random private address
 Có thể được sử dụng khi một thiết bị muốn protect privacy của nó. Địa chỉ có thể thay đổi theo chu kỳ để ẩn danh tính device và theo dõi device.
-### #Resolvable random private address 
-
+#### Resolvable random private address 
 Resolvable private address đúng như tên gọi nó có thẻ resolvable, vì chung có một khóa share trước (pre-share key) để xác định địa chỉ mới mỗi khi thay đổi. Key này là Indentity Resolving Key - IRK), được dùng để vừa generate and resolve địa chỉ random.
 
 
 IRK cho phép bên còn lại chuyển đổi địa chỉ riêng từ ngẫu nghiên thành địa chỉ Bluetooth LE thực của thiết bị.
-### #Non-resolvable random private address
+#### Non-resolvable random private address
 Là loại address mà các device khác không resolvable được, và chỉ nhằm mục đích ngăn chặn việc theo dõi. Loại địa chỉ này không được sử dụng phổ biến.
+# Advertisement packet
+BLE packet, phần chính gọi là Protocol Data Unit (PDU). PDU bao gồm data PDU (hay gọi là data channel PDU) và advertising PDU (advertising channel PDU), tùy thuộc vào advertisement hoặc data transmission.
+![alt text](/assets/BLE/ble_packet_pdu_structure.png)
+Advertising PDU bao gồm header và payload, phần header của advertising bao gồm:
+![alt text](/assets/BLE/advertising_pdu_header.png)
+- **PDU Type**: Xác định advertisement type, ví dụ `ADV_IND`.
+- **RFU**: Reserved for future use.
+- **ChSel**: Set 1 nếu LE Channel Selection Algorithm #2.
+- **TxAdd** (Tx Address): 0 or 1, phụ thuộc vào transmitter address là public hay random.
+- **RxAdd** (Rx Address): 0 or 1, phụ thuộc vào receiver address là public hay random.
+- **Lenght**: Lenght của payload.
+
+Payload của advertising PDU thì được chia làm 2 section, 6 byte đầu đại diệ cho advertiser address (AdvA) và phần còn lại là advertisement data (AdvData).
+
+![alt text](/assets/BLE/advertising_pdu_payload.png)
+- **AdvA**: Bluetooth address của advertising device.
+- **AdvData**: Advertisement data packet.
+
+
+Payload structure phụ thuộc vào advertising. Khi directed advertisement (`ADV_DIRECT_IND`) cần thêm space để chỉ định thêm address của receiver. Do đó, AdvData field thì đã thay thế bằng receiver address field có size bằng 6. Advertisement packet của type (`ADV_DIRECT_IND`) không bao gồm payload.
+
+
+**Advertisement data section** thì được mô tả như hình dưới:
+
+
+![alt text](/assets/BLE/advertisement_data_structure.png)
+Advertisement data packet thì tạo ra nhiều structure được gọi là advertisement data structure (AD structures). Mỗi AD structure có 1 length field, 1 field cho type (AD type), 1 field cho data (AD Data).
+
+
+Một số AD type thường được dùng:
+- **Complete local name** (`BT_DATA_NAME_COMPLETE`): Tên thiết bị khi quét.
+- **Shortened local name** (`BT_DATA_NAME_SHORTENED`): Tên nhưng ngắn hơn.
+- **Uniform Resource Identifier** (`BT_DATA_URI`): Được sử dụng để quảng bá một URI, chẳng hạn như địa chỉ trang web (URL). 
+- **Service UUID**: Là số duy nhất trên toàn cầu để cho 1 service cụ thể. 
+- **Manufacturer Specific** **Data** (`BT_DATA_MANUFACTURER_DATA`): Đây là một loại rất phổ biến, cho phép các công ty tự do định nghĩa các dữ liệu quảng bá tùy chỉnh của riêng họ. Công nghệ iBeacon của Apple hoạt động hoàn toàn dựa trên loại dữ liệu này.
+- **Flags**: là các biến có kích thước 1-bit dùng để đánh dấu (bật/tắt) một thuộc tính hoặc chế độ hoạt động cụ thể của thiết bị (ví dụ: báo cho biết thiết bị này có hỗ trợ kết nối Bluetooth cổ điển hay chỉ hỗ trợ BLE).
 
 
 
+![alt text](/assets/BLE/ad_flags_example.png)
+## Flags
+Advertisement flag thì 1 bit nhưng đóng gói thì 1 byte, có nghĩa là 8 flags có thể được set. Một số flag:
+- `BT_LE_AD_LIMITED`: Mở kết nối trong _thời gian ngắn_ (tự tắt quảng bá sau một khoảng thời gian để tiết kiệm pin).
+- `BT_LE_AD_GENERAL`: Mở kết nối _liên tục dài hạn_ (không tự động tắt, timeout = 0).
+- `BT_LE_AD_NO_BREDR`: Thiết bị _chỉ dùng BLE_, không hỗ trợ sóng Bluetooth classic (BR/EDR).
+- 

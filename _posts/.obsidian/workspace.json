@@ -55,7 +55,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "tag:#Resolvable",
+                "query": "tag:#Non-resolvable",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -100,7 +100,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 421.5,
+    "width": 245.5,
     "collapsed": true
   },
   "right": {
@@ -209,18 +209,26 @@
   },
   "active": "5f31dbc4e783b618",
   "lastOpenFiles": [
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.10084.99179ab7a0be",
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.10084.44715768af1d",
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.10084.77637a8a4b5a",
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.10084.2ae025cbfe8e",
+    "Assets/Pasted image 20260925224519.png",
+    "Assets/Pasted image 20260925222003.png",
+    "Assets/Pasted image 20260925220617.png",
+    "Assets/Pasted image 20260925214419.png",
+    "Assets/Pasted image 20260925213555.png",
+    "Assets/Pasted image 20260925213232.png",
+    "BLE/2026-09-24-Bluetooth_LE_Advertising.md",
     "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.7772.932a55cd714b",
     "Assets/Pasted image 20260924220130.png",
     "BLE/2026-09-24-Bluetooth_LE_Advertising.md.tmp.7772.c986fa6d7a5f",
-    "BLE/2026-09-24-Bluetooth_LE_Advertising.md",
     "Assets/Pasted image 20260924094657.png",
     "Assets/Pasted image 20260924093537.png",
     "Assets/Pasted image 20260924084155.png",
     "BLE/2026-09-06-PHY.md",
     "BLE/2026-09-05-ATT_&_GATT.md",
     "BLE/2026-09-05-ATT_&_GATT.md.tmp.9116.76c963bdaf9c",
-    "Assets/Pasted image 20260906172015.png",
-    "Assets/Pasted image 20260906171246.png",
     "BLE/2026-09-05-GAP.md",
     "BLE/2026-08-20-BLE_Introduction.md",
     "Kernel/2025-07-16-Queue.md",
@@ -236,13 +244,9 @@
     "Edge_AI/2026-08-17-AI_Model_Optimization_for_Edge_Devices.md",
     "Edge_AI",
     "BLE_ATT_GATT",
-    "Assets/Pasted image 20260905163515.png",
-    "Assets/Pasted image 20260820083321.png",
     "Assets",
-    "Pasted image 20260820082232.png",
     "Kernel/2025-05-16-Kernel.md",
     "BLE",
-    "Templates/Post Template.md",
-    "Templates"
+    "Templates/Post Template.md"
   ]
 }
